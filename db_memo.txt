@@ -1,0 +1,42 @@
+﻿tumblr_post
+-id
+-blog_name
+-post_id
+-photo_url
+-twitter_post_id
+
+twitter_post
+-id
+-post_text
+-image_url
+
+twitter_post_log
+-id
+-post_id
+-error_msg
+-posted_at
+
+// クエリ
+CREATE DATABASE TFTbot CHARACTER SET utf8;
+
+show databases;
+
+CREATE TABLE 
+
+
+// 登録
+たんぶらーから一覧取得
+↓
+post_idとphoto_urlで重複チェックしてなければ登録
+
+// 投稿
+tumblr_postからランダム取得
+↓
+twiiter_post_idが
+→null
+ twitterにphoto_urlの画像をアップロード
+ 結果をtwitter_postに登録し、tumblr_postのtwitter_post_idに登録
+→値あり
+ twitter_postからツイート内容取得してそのままツイート
+↓
+ログに保存
