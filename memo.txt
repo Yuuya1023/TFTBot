@@ -1,0 +1,34 @@
+﻿http://14-00.com/archives/26
+
+centos6.4
+
+// apacheのインストール
+sudo yum -y install httpd
+
+// 自動起動をon
+chkconfig httpd on
+
+// ファイアウォールの停止
+sudo service iptables stop
+
+// シンボリックリンクの作成
+sudo ln -fs /vagrant /var/www/html
+
+// phpのインストール
+sudo yum -y install php
+
+// phpの拡張子登録
+/etc/httpd/conf/httpd.conf
+AddType application/x-httpd-php .php
+AddType application/x-httpd-php-source .phps
+
+// 再起動
+sudo service httpd restart
+
+// mysqlのインストール
+sudo yum -y install mysql-server
+//起動
+sudo /etc/rc.d/init.d/mysqld start
+// 自動起動ON
+sudo chkconfig mysqld on
+
