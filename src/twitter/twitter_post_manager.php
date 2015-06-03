@@ -24,8 +24,8 @@ class TwitterPostManager
 		$connection = $this->connect();
 		$media_id = $connection->upload("media/upload", array("media" => $phto_url));
 
-		var_dump($media_id);
-		echo "<p><p>";
+		// var_dump($media_id);
+		// echo "<p><p>";
 
 		// 投稿
 		$parameters = array(
