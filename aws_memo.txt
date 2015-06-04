@@ -1,0 +1,46 @@
+﻿http://blog.be-style.jpn.com/article/73290765.html
+
+// セキュリティグループにhttpを追加
+
+// ログイン
+ssh -i hoge.pem ec2-user@xxx.xxx.xxx.xxx
+
+
+// パスワード変える
+sudo -i
+passwd [user名]
+
+// apacheインストール
+sudo yum -y install httpd
+sudo service httpd start
+sudo chkconfig httpd on
+
+// phpのインストール
+sudo yum -y install php
+
+// phpの拡張子登録
+/etc/httpd/conf/httpd.conf
+AddType application/x-httpd-php .php
+AddType application/x-httpd-php-source .phps
+
+// mysqlのインストール
+sudo yum -y install mysql-server
+//起動
+sudo /etc/rc.d/init.d/mysqld start
+// 自動起動ON
+sudo chkconfig mysqld on
+
+// タイムゾーンの変更
+sudo cp /usr/share/zoneinfo/Japan /etc/localtime
+
+// 再起動
+sudo service httpd restart
+
+
+// リポジトリ追加
+cd /tmp
+wget http://pkgs.repoforge.org/rpmforge-release/rpmforge-release-0.5.2-2.el6.rf.x86_64.rpm
+sudo rpm -Uvh rpmforge-release-0.5.2-2.el6.rf.x86_64.rpm
+
+// phpmyadminのインストール
+sudo yum install phpmyadmin

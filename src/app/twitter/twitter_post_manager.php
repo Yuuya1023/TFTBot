@@ -1,6 +1,6 @@
 <?php
 
-include_once(dirname(__FILE__) . "/../define.php");
+include_once(dirname(__FILE__) . "/../../../define.php");
 include_once(dirname(__FILE__) . "/../util/util.php");
 require_once(dirname(__FILE__) . "/lib/twitteroauth/autoload.php");
 use Abraham\TwitterOAuth\TwitterOAuth;
