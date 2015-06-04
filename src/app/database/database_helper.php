@@ -37,7 +37,9 @@ class DatabaseHelper{
 		}
 
 		$exclusionQuery = "";
+		if (count($id_list) > 0) 
 		{
+			$exclusionQuery = " AND (";
 			for ($i=0; $i < count($id_list); $i++) { 
 				$tumblr_post_id = $id_list[$i]["tumblr_post_id"];
 
@@ -46,9 +48,10 @@ class DatabaseHelper{
 					$exclusionQuery = $exclusionQuery . " OR ";
 				}
 			}
+			$exclusionQuery = $exclusionQuery . ")";
 		}
 
-		$query = "SELECT * FROM tumblr_post WHERE blog_name = '" . $blog_name . "' AND (" . $exclusionQuery . ") ORDER BY RAND() LIMIT 1";
+		$query = "SELECT * FROM tumblr_post WHERE blog_name = '" . $blog_name . "' " . $exclusionQuery . " ORDER BY RAND() LIMIT 1";
 		echo "<p>{$query}";
 		return $database_manager->select( $query );
 	}
