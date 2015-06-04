@@ -60,9 +60,9 @@ class DatabaseHelper{
 	}
 
 	// twitter_post_logに登録
-	public static function insertTwitterPostLog( $database_manager, $tumblr_post_id, $error_msg ){
+	public static function insertTwitterPostLog( $database_manager, $blog_name, $tumblr_post_id, $error_msg ){
 
-		$query = "INSERT INTO twitter_post_log (tumblr_post_id, error_msg) VALUES (" . $tumblr_post_id . ", '" . $error_msg . "')";
+		$query = "INSERT INTO twitter_post_log (blog_name, tumblr_post_id, error_msg) VALUES ('" . $blog_name . "', " . $tumblr_post_id . ", '" . $error_msg . "')";
 		return $database_manager->insert( $query );
 	}
 }

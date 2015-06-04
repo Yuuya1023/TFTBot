@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- ホスト: localhost
--- 生成日時: 2015 年 6 月 03 日 15:09
+-- 生成日時: 2015 年 6 月 04 日 18:57
 -- サーバのバージョン: 5.1.73
 -- PHP のバージョン: 5.3.3
 
@@ -34,9 +34,7 @@ CREATE TABLE IF NOT EXISTS `tumblr_post` (
   `twitter_post_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `blog_name` (`blog_name`,`photo_url`)
-) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=51 ;
-
--- --------------------------------------------------------
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
 --
 -- テーブルの構造 `twitter_post`
@@ -50,9 +48,7 @@ CREATE TABLE IF NOT EXISTS `twitter_post` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `post_text` (`post_text`,`image_url`),
   UNIQUE KEY `post_id` (`post_id`)
-) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=7 ;
-
--- --------------------------------------------------------
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
 --
 -- テーブルの構造 `twitter_post_log`
@@ -60,11 +56,12 @@ CREATE TABLE IF NOT EXISTS `twitter_post` (
 
 CREATE TABLE IF NOT EXISTS `twitter_post_log` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `tumblr_post_id` bigint(20) NOT NULL,
+  `blog_name` varchar(64) DEFAULT NULL,
+  `tumblr_post_id` bigint(20) DEFAULT NULL,
   `error_msg` varchar(256) DEFAULT NULL,
   `posted_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;

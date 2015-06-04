@@ -30,7 +30,8 @@ $twitter_manager = new TwitterPostManager();
 
 
 // TODO: ブログ名動的に
-$tum_res = DatabaseHelper::selectRandomTumblrPost( $database_manager, "koroazu" );
+$blog_name = "koroazu";
+$tum_res = DatabaseHelper::selectRandomTumblrPost( $database_manager, $blog_name );
 if ( $tum_res && count( $tum_res ) > 0 ) {
 	// echo "<p>";
 	// var_dump($tum_res);
@@ -93,7 +94,7 @@ if ( $tum_res && count( $tum_res ) > 0 ) {
 
 
 // ログに保存
-DatabaseHelper::insertTwitterPostLog( $database_manager, $tumblr_post_id, $error_msg );
+DatabaseHelper::insertTwitterPostLog( $database_manager, $blog_name, $tumblr_post_id, $error_msg );
 $database_manager->close();
 
 echo "end";
