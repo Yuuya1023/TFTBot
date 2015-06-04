@@ -44,3 +44,11 @@ sudo rpm -Uvh rpmforge-release-0.5.2-2.el6.rf.x86_64.rpm
 
 // phpmyadminのインストール
 sudo yum install phpmyadmin
+
+
+
+
+// cron
+crontab -e
+
+00,15,30,45 * * * * /usr/bin/php /var/www/html/app/post_to_twitter.php

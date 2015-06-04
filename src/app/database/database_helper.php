@@ -4,8 +4,23 @@ include_once(dirname(__FILE__) . "/database_manager.php");
 
 class DatabaseHelper{
 	
+	// tumblr_postの最新のIDを取得
+	public static function selectPostIdFromTumblrPost( $database_manager, $blog_name ) {
+
+		$query = "SELECT post_id FROM tumblr_post WHERE blog_name = '" . $blog_name . "' ORDER BY post_id DESC LIMIT 1";
+		echo "<p>{$query}";
+		$res = $database_manager->select( $query );
+
+		if ( count($res) < 1 ) {
+			return -1;	
+		}
+
+		return $res[0]['post_id'];
+	}
+
 	// tumblr_postに投稿を登録
 	public static function insertTumblrPost( $database_manager, $blog_name, $post_id, $photo_url ){
+
 		$query = "INSERT INTO tumblr_post (blog_name, post_id, photo_url) VALUES ('" . $blog_name . "', ". $post_id . ", '" . $photo_url . "')";
 		// echo "<p>{$query}";
 		return $database_manager->insert( $query );

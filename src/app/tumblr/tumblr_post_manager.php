@@ -5,16 +5,19 @@ include_once(dirname(__FILE__) . "/../../../define.php");
 class TumblrPostManager
 {
 	private $api_key = TUMBLR_API_KEY;
-	private $host = TUMBLR_HOST;
 
 	private $offset = 0;
 	private $limit = 50;
 	private $post_list = array();
 
-	public function create() {
+	private $host_suffix = ".tumblr.com";
 
+	public function createWithBlogName( $blog_name, $last_post_id ) {
+
+		$this->offset = 0;
+		$host_name = $blog_name . $this->host_suffix;
 		while( true ) {
-			$api_url = "https://api.tumblr.com/v2/blog/{$this->host}/posts/photo?api_key={$this->api_key}&offset={$this->offset}&limit={$this->limit}";
+			$api_url = "https://api.tumblr.com/v2/blog/{$host_name}/posts/photo?api_key={$this->api_key}&offset={$this->offset}&limit={$this->limit}";
 			$json = @file_get_contents( $api_url );
 			$obj = json_decode($json);
 			// echo "{$api_url}";
@@ -23,8 +26,16 @@ class TumblrPostManager
 			$posts = $obj->response->posts;
 			foreach ($posts as $post) {
 				$photos = $post->photos;
-				foreach ($photos as $photo) {
-					$this->post_list[count($this->post_list)] = $this->getDetail( $post, $photo );
+				
+				// 登録済みの投稿かチェック
+				if ( $post->id == $last_post_id ) {
+					return $this->post_list;
+				}
+				else {
+					foreach ($photos as $photo) {
+						$detail = $this->getDetail( $post, $photo );
+						$this->post_list[count($this->post_list)] = $detail;
+					}	
 				}
 			}
 
@@ -43,6 +54,12 @@ class TumblrPostManager
 		// var_dump($post_t[0]);
 
 		return $this->post_list;
+
+	}
+
+	public function create( $last_post_id ) {
+
+		return $this->createWithBlogName( "koroazu" );
 	}
 
 
