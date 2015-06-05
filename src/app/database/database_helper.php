@@ -52,7 +52,7 @@ class DatabaseHelper{
 		}
 
 		$query = "SELECT * FROM tumblr_post WHERE blog_name = '" . $blog_name . "' " . $exclusionQuery . " ORDER BY RAND() LIMIT 1";
-		echo "<p>{$query}";
+		// echo "<p>{$query}";
 		return $database_manager->select( $query );
 	}
 
