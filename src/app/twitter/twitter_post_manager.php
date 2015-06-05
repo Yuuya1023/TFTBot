@@ -15,19 +15,26 @@ class TwitterPostManager
 		return $connection;
 	}
 
-	public function uploadImage( $oauth_object, $phto_url ){
+	public function uploadImage( $oauth_object, $photo_url_list ){
 
 		//接続
 		$connection = $this->connect( $oauth_object );
-		$media_id = $connection->upload("media/upload", array("media" => $phto_url));
 
-		// var_dump($media_id);
+		$media_ids = array();
+		foreach ($photo_url_list as $photo_url) {
+			$media_id = $connection->upload("media/upload", array("media" => $photo_url));
+			$media_ids[count($media_ids)] = $media_id->media_id_string;
+		}
+
+		// var_dump($media_ids);
+		// echo "<p><p>";
+		// echo implode( ",", $media_ids);
 		// echo "<p><p>";
 
 		// 投稿
 		$parameters = array(
 		    'status' => '',
-		    'media_ids' => $media_id->media_id_string,
+		    'media_ids' => implode( ",", $media_ids),
 		);
 		$result = $connection->post('statuses/update', $parameters);
 

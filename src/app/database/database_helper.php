@@ -26,8 +26,8 @@ class DatabaseHelper{
 		return $database_manager->insert( $query );
 	}
 
-	// tumblr_postからランダムにひとつ投稿を取得
-	public static function selectRandomTumblrPost( $database_manager, $blog_name ){
+	// tumblr_postからランダム投稿を取得
+	public static function selectRandomTumblrPost( $database_manager, $blog_name, $limit_row ){
 
 		// ログの最新10件をランダム取得から除外
 		$id_list;
@@ -51,7 +51,7 @@ class DatabaseHelper{
 			$exclusionQuery = $exclusionQuery . ")";
 		}
 
-		$query = "SELECT * FROM tumblr_post WHERE blog_name = '" . $blog_name . "' " . $exclusionQuery . " ORDER BY RAND() LIMIT 1";
+		$query = "SELECT * FROM tumblr_post WHERE blog_name = '" . $blog_name . "' " . $exclusionQuery . " ORDER BY RAND() LIMIT " . $limit_row;
 		// echo "<p>{$query}";
 		return $database_manager->select( $query );
 	}

@@ -45,7 +45,7 @@ class PostToTwitter
 		$twitter_manager = new TwitterPostManager();
 
 		// 投稿するツイートをランダムで一件取得
-		$tum_res = DatabaseHelper::selectRandomTumblrPost( $database_manager, $blog_name );
+		$tum_res = DatabaseHelper::selectRandomTumblrPost( $database_manager, $blog_name, 1 );
 		if ( $tum_res && count( $tum_res ) > 0 ) {
 			// echo "<p>";
 			// var_dump($tum_res);
@@ -75,8 +75,9 @@ class PostToTwitter
 			}
 			else {
 				// 画像をアップロードしてそのまま投稿
-				$photo_url = $tum_res[0]['photo_url'];
-				$upload_result = $twitter_manager->uploadImage( $oauth_object, $photo_url );
+				$photo_url_list = array();
+				$photo_url_list[0] = $tum_res[0]['photo_url'];
+				$upload_result = $twitter_manager->uploadImage( $oauth_object, $photo_url_list );
 
 				if ( array_key_exists( "errors", $upload_result ) ) {
 					$errors = $upload_result->errors;
@@ -114,6 +115,53 @@ class PostToTwitter
 		echo "tryend<p>";
 
 		if ( $error_msg !== "" && $tumblr_post_id !== -1 ) {
+			return false;
+		}
+
+		return true;
+	}
+
+	public function postFourImages( $oauth_object, $blog_name ){
+
+		// ログに保存するための変数
+		$error_msg = "";
+
+		$database_manager = new DatabaseManager();
+		$database_manager->connect();
+
+		$twitter_manager = new TwitterPostManager();
+
+		// 投稿するツイートをランダムで4件取得
+		$tum_res = DatabaseHelper::selectRandomTumblrPost( $database_manager, $blog_name, 4 );
+		if ( $tum_res && count( $tum_res ) > 0 ) {
+
+			// 画像をアップロードしてそのまま投稿
+			$tumblr_post_id_list = array();
+			$photo_url_list = array();
+			foreach ($tum_res as $res) {
+				$index = count($photo_url_list);
+				$tumblr_post_id_list[$index] = $res['id'];
+				$photo_url_list[$index] = $res['photo_url'];
+			}
+			$upload_result = $twitter_manager->uploadImage( $oauth_object, $photo_url_list );
+
+			if ( array_key_exists( "errors", $upload_result ) ) {
+				$errors = $upload_result->errors;
+				foreach ($errors as $error) {
+					$error_msg = $error->code . " " . $error->message . ", " . $error_msg;
+				}
+			}
+		}
+
+		// ログに保存
+		foreach ($tumblr_post_id_list as $id) {
+			DatabaseHelper::insertTwitterPostLog( $database_manager, $blog_name, $id, $error_msg );
+		}
+		$database_manager->close();
+
+		echo "end<p>";
+
+		if ( $error_msg !== "" ) {
 			return false;
 		}
 
