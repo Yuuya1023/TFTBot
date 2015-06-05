@@ -19,7 +19,7 @@ include_once(dirname(__FILE__) . "/twitter/twitter_post_manager.php");
 class PostToTwitter
 {
 
-	public function post( $blog_name ){
+	public function post( $oauth_object, $blog_name ){
 
 		// ログに保存するための変数
 		$twitter_post_id = "";
@@ -50,7 +50,7 @@ class PostToTwitter
 				$post_text = DatabaseHelper::selectPostTextFromTwitterPost( $database_manager, $temp_twitter_post_id );
 
 				// 投稿
-				$upload_result = $twitter_manager->uploadText( $post_text );
+				$upload_result = $twitter_manager->uploadText( $oauth_object, $post_text );
 
 				if ( array_key_exists( "errors", $upload_result ) ) {
 					$errors = $upload_result->errors;
@@ -64,7 +64,7 @@ class PostToTwitter
 			else {
 				// 画像をアップロードしてそのまま投稿
 				$photo_url = $tum_res[0]['photo_url'];
-				$upload_result = $twitter_manager->uploadImage( $photo_url );
+				$upload_result = $twitter_manager->uploadImage( $oauth_object, $photo_url );
 
 				if ( array_key_exists( "errors", $upload_result ) ) {
 					$errors = $upload_result->errors;

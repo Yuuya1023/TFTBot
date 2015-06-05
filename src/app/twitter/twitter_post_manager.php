@@ -2,26 +2,23 @@
 
 include_once(dirname(__FILE__) . "/../../../define.php");
 include_once(dirname(__FILE__) . "/../util/util.php");
+include_once(dirname(__FILE__) . "/oauth_object.php");
 require_once(dirname(__FILE__) . "/lib/twitteroauth/autoload.php");
 use Abraham\TwitterOAuth\TwitterOAuth;
 
 class TwitterPostManager
 {
-	private $consumerKey = TWITTER_API_KEY;
-	private $consumerSecret = TWITTER_API_KEY_SECRET;
-	private $accessToken = TWITTER_ACCES_TOKEN;
-	private $accessTokenSecret = TWITTER_ACCES_TOKEN_SECRET;
 
-	private function connect(){
+	private function connect( $oauth_object ){
 
-		$connection = new TwitterOAuth($this->consumerKey, $this->consumerSecret, $this->accessToken, $this->accessTokenSecret);
+		$connection = new TwitterOAuth($oauth_object->getConsumerKey(), $oauth_object->getConsumerSecret(), $oauth_object->getAccessToken(), $oauth_object->getAccessTokenSecret());
 		return $connection;
 	}
 
-	public function uploadImage( $phto_url ){
+	public function uploadImage( $oauth_object, $phto_url ){
 
 		//接続
-		$connection = $this->connect();
+		$connection = $this->connect( $oauth_object );
 		$media_id = $connection->upload("media/upload", array("media" => $phto_url));
 
 		// var_dump($media_id);
@@ -40,10 +37,10 @@ class TwitterPostManager
 		return $result;
 	}
 
-	public function uploadText( $text ){
+	public function uploadText( $oauth_object, $text ){
 
 		//接続
-		$connection = $this->connect();
+		$connection = $this->connect( $oauth_object );
 
 		//ツイート
 		$result = $connection->post("statuses/update", array("status" => $text));
