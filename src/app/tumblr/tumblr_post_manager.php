@@ -57,12 +57,6 @@ class TumblrPostManager
 
 	}
 
-	public function create( $last_post_id ) {
-
-		return $this->createWithBlogName( "koroazu" );
-	}
-
-
 	private function getDetail( $post, $photo ){
 
 		$res = array();
