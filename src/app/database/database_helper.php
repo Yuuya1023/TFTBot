@@ -45,7 +45,7 @@ class DatabaseHelper{
 
 				$exclusionQuery = $exclusionQuery . "id != " . $tumblr_post_id;
 				if ( $i != count($id_list) - 1 ) {
-					$exclusionQuery = $exclusionQuery . " OR ";
+					$exclusionQuery = $exclusionQuery . " AND ";
 				}
 			}
 			$exclusionQuery = $exclusionQuery . ")";
