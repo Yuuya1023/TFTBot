@@ -87,4 +87,11 @@ class DatabaseHelper{
 		$query = "INSERT INTO twitter_post_log (blog_name, tumblr_post_id, error_msg) VALUES ('" . $blog_name . "', " . $tumblr_post_id . ", '" . $error_msg . "')";
 		return $database_manager->insert( $query );
 	}
+
+	// twitter_post_logの削除
+	public static function deleteTwitterPostLog( $database_manager ){
+
+		$query = "DELETE FROM twitter_post_log WHERE posted_at < current_date";
+		return $database_manager->insert( $query );
+	}
 }
