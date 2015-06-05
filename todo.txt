@@ -1,6 +1,5 @@
 ﻿
 // TODO:
-・24時にたんぶらーから投稿取得するくーろんちゃん設定
 ・セキュリティ的ななにかをなおす
 
 
@@ -10,3 +9,5 @@
 ・投稿ランダム取得時にログ最新10件（同ブログだけ）で投稿されていたものを除外する
 	SELECT tumblr_post_id FROM twitter_post_log WHERE blog_name = "hogehoge" ORDER BY id DESC LIMIT 10;
 ・ログ定期的に消す
+・12時にたんぶらーから投稿取得するくーろんちゃん設定
+・エラーが出たら再投稿

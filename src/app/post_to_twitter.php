@@ -21,6 +21,18 @@ class PostToTwitter
 
 	public function post( $oauth_object, $blog_name ){
 
+		// status is a duplicate対策で三回までトライ
+		for ($i=0; $i < 3; $i++) { 
+			$is_success = $this->tryPost( $oauth_object, $blog_name );
+
+			if ( $is_success === true ) {
+				return;
+			}
+		}
+	}
+
+	private function tryPost( $oauth_object, $blog_name ){
+
 		// ログに保存するための変数
 		$twitter_post_id = "";
 		$error_msg = "";
@@ -99,7 +111,13 @@ class PostToTwitter
 		DatabaseHelper::insertTwitterPostLog( $database_manager, $blog_name, $tumblr_post_id, $error_msg );
 		$database_manager->close();
 
-		echo "end";
+		echo "tryend<p>";
+
+		if ( $error_msg !== "" && $tumblr_post_id !== -1 ) {
+			return false;
+		}
+
+		return true;
 	}
 }
 ?>
