@@ -51,4 +51,8 @@ sudo yum install phpmyadmin
 // cron
 crontab -e
 
-00,15,30,45 * * * * /usr/bin/php /var/www/html/app/post_to_twitter.php
+00,15,30,45 0-2,8-23 * * * /usr/bin/php /var/www/cron/post.php
+00,30 * * * * /usr/bin/php /var/www/cron/post2.php
+
+00 12 * * * /usr/bin/php /var/www/cron/delete_log.php
+00 12 * * * /usr/bin/php /var/www/cron/regist.php
