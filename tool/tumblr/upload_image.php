@@ -4,6 +4,8 @@ define("CONSUMER_KEY", '');
 define("CONSUMER_SECRET", '');
 define("OAUTH_TOKEN", '');
 define("OAUTH_SECRET", '');
+
+define("BLOG_NAME", 'koroazu.tumblr.com');
  
 function oauth_gen($method, $url, $iparams, &$headers) {
      
@@ -49,35 +51,38 @@ function oauth_sig($method, $uri, $params) {
     return base64_encode(hash_hmac('sha1', $sig, CONSUMER_SECRET."&". OAUTH_SECRET, true));
 }
  
-$img_dir = $post_caption = $post_body = $post_title = $_REQUEST['image_path'];
-$LOCAL_DIR=$img_dir."/";
+// $img_dir = $post_caption = $post_body = $post_title = $_REQUEST['image_path'];
+$LOCAL_DIR=dirname(__FILE__) . "/image/";
  
-if($_REQUEST['url'] != ''){
-    $post_caption = '<a href="'.$_REQUEST['url'].'"> '.$post_caption.'</a>';
-}
-$TAGS = $_REQUEST['tags'];
-$post_tags=mb_convert_encoding($TAGS,'UTF-8','auto');
+// if($_REQUEST['url'] != ''){
+//     $post_caption = '<a href="'.$_REQUEST['url'].'"> '.$post_caption.'</a>';
+// }
+// $TAGS = $_REQUEST['tags'];
+// $post_tags=mb_convert_encoding($TAGS,'UTF-8','auto');
 $drc=dir($LOCAL_DIR);
 while($fl=$drc->read()){
-    echo __LINE__."<br />¥n";
+    // echo __LINE__."<br />¥n";
     $din=pathinfo($LOCAL_DIR.$fl);
  
     $filename=$LOCAL_DIR.$din['basename'];
+    echo "<p><p>";
+    echo $filename;
+    echo "<p><p>";
  
     //.拡張子より短いファイル名をスキップ
     if(strlen($din['basename'])<=4 or $din['basename']  == ".DS_Store"){
-            continue;
+        continue;
     }
  
     $headers = array("Host" => "http://api.tumblr.com/", "Content-type" => "application/x-www-form-urlencoded", "Expect" => "");
     $params = array("data" => array(file_get_contents($filename)),
         "type"  => "photo",
-        "title" => $post_title,
-        "tags"  => $post_tags,
-        "caption" => $post_caption,
+        "title" => "",//$post_title,
+        // "tags"  => "",//$post_tags,
+        // "caption" => $post_caption,
     );
      
-    $blogname = "hogehoge.tumblr.com";
+    $blogname = BLOG_NAME;
     oauth_gen("POST", "http://api.tumblr.com/v2/blog/$blogname/post", $params, $headers);
      
     $ch = curl_init();
@@ -101,6 +106,7 @@ while($fl=$drc->read()){
     if (curl_errno($ch)) {
             echo "curl_error($c)\n";
     }
-    echo $respon;
+    echo $response;
+
+    curl_close($ch);
 }
-curl_close($ch);
