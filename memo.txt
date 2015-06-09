@@ -37,3 +37,9 @@ sudo chkconfig mysqld on
 vagrant package
 // パッケージインポート
 vagrant box add [box名] package.box
+
+
+// エラー：Device eth1 does not seem to be present, delaying initialization.
+// 上記が出たときはログインして下記コマンドを打って再起動
+sudo ln -s -f /dev/null /etc/udev/rules.d/70-persistent-net.rules
+vagrant reload
