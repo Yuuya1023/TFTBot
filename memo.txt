@@ -32,3 +32,8 @@ sudo /etc/rc.d/init.d/mysqld start
 // 自動起動ON
 sudo chkconfig mysqld on
 
+
+// パッケージ化
+vagrant package
+// パッケージインポート
+vagrant box add [box名] package.box
