@@ -46,6 +46,14 @@ sudo rpm -Uvh rpmforge-release-0.5.2-2.el6.rf.x86_64.rpm
 sudo yum install phpmyadmin
 
 
+// .htaccessを有効化
+http://kb.xpressone.net/2566
+// .htaccessの書き方
+http://murashun.jp/blog/20141229-01.html
+
+// index ofを表示しない
+Options -Indexes
+
 
 
 // cron

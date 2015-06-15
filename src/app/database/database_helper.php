@@ -26,6 +26,18 @@ class DatabaseHelper{
 		return $database_manager->insert( $query );
 	}
 
+	// ランダムで画像urlを取得
+	public static function selectRandomPhotoUrlFromTumblrPost( $database_manager, $blog_name ){
+
+		$query = "SELECT photo_url FROM tumblr_post WHERE blog_name = '" . $blog_name . "' ORDER BY RAND() LIMIT 1";
+		// echo "<p>{$query}";
+		$res = $database_manager->select( $query );
+		if (count($res) === 0) {
+			return null;
+		}
+		return $res[0]["photo_url"];
+	}
+
 	// tumblr_postからランダム投稿を取得
 	public static function selectRandomTumblrPost( $database_manager, $blog_name, $limit_row ){
 
