@@ -133,17 +133,17 @@ class TwitterPostManager
 				// print_r($res);
 
 				if ( $res && array_key_exists( "id", $res)) {
-					$retweeted = $res["retweeted"];
-					if ( !$retweeted && $retweeted === false ) {
+					$text = "" .  $res['text'];
+					// print_r(" @" . $res["user"]["screen_name"]);
+					// print_r(" text->" . $text);
 
+					// リツイートには反応しない
+					if ( !preg_match("/RT/u", $text) ) {
+						// 指定した文字列が入っているか
 						$match_text = implode("|", $match_text_list);
-						$text = "" .  $res['text'];
    						if( preg_match("/" . $match_text . "/u", $text) ) {
-							print_r(" hit!!!!!!!!!");
-							print_r(" id->" . $res["id"]);
-							print_r(" @" . $res["user"]["screen_name"]);
-							print_r(" text->" . $res["text"]);
-							print_r("\n");
+							// print_r(" hit!!!!!!!!!");
+							// print_r("\n");
 
 							$database_manager = new DatabaseManager();
 							$database_manager->connect();
@@ -178,8 +178,8 @@ class TwitterPostManager
 							$database_manager->close();
 						}
 						else {
-							print_r(" no");
-							print_r("\n");
+							// print_r(" no");
+							// print_r("\n");
 						}
 					}
 				}
