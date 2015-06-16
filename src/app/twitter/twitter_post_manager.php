@@ -44,7 +44,7 @@ class TwitterPostManager
 			if ( $mentions !== null && count($mentions) ) {
 				$mention_list = array($screen_name);
 				for ($i=0; $i < count($mentions) ; $i++) { 
-					$mention_list[count($mention_list)] = $mentions[$i]["screen_name"];
+					$mention_list[count($mention_list)] = $mentions[$i];
 				}
 
 				//配列で重複している物を削除する
@@ -90,7 +90,7 @@ class TwitterPostManager
 		return $result;
 	}
 
-	public function streaming( $oauth_object, $match_text_list, $blog_name ){
+	public function streaming( $oauth_object, $my_screen_name, $match_text_list, $blog_name ){
 		$url = 'https://userstream.twitter.com/1.1/user.json';
 		$method = 'GET';
  
@@ -132,7 +132,7 @@ class TwitterPostManager
 
 				// print_r($res);
 
-				if ( $res && array_key_exists( "id", $res)) {
+				if ( $res && array_key_exists( "id", $res) ) {
 					$text = "" .  $res['text'];
 					// print_r(" @" . $res["user"]["screen_name"]);
 					// print_r(" text->" . $text);
@@ -145,37 +145,45 @@ class TwitterPostManager
 							// print_r(" hit!!!!!!!!!");
 							// print_r("\n");
 
-							$database_manager = new DatabaseManager();
-							$database_manager->connect();
+							// メンションのリスト作成
+							$mention_list = array();
+							$mentions = $res["entities"]["user_mentions"];
+							for ($i=0; $i < count($mentions) ; $i++) { 
+								$mention_list[count($mention_list)] = $mentions[$i]["screen_name"];
+							}
 
-							$count = DatabaseHelper::selectCountFromAutoReplyLog( $database_manager );
+							// 自分を巻き込んでる場合は反応しない
+							if ( !in_array( $my_screen_name, $mention_list ) ) {
+								$database_manager = new DatabaseManager();
+								$database_manager->connect();
 
-							// 規制回避のため直近15分の間に100件まで
-							$error_msg = "";
-							$post_limit = 100;
-							if ( $count < $post_limit ) {
-								$photo_url = DatabaseHelper::selectRandomPhotoUrlFromTumblrPost( $database_manager, $blog_name );
-								$photo_url_list = array($photo_url);
-								$upload_result = $this->uploadReplyImage( $oauth_object, 
-																		$photo_url_list, 
-																		$res["id"], 
-																		$res["user"]["screen_name"], 
-																		$res["entities"]["user_mentions"] );
+								// 規制回避のため直近15分の間に100件まで
+								$error_msg = "";
+								$post_limit = 50;
+								$count = DatabaseHelper::selectCountFromAutoReplyLog( $database_manager );
+								if ( $count < $post_limit ) {
+									$photo_url = DatabaseHelper::selectRandomPhotoUrlFromTumblrPost( $database_manager, $blog_name );
+									$photo_url_list = array($photo_url);
+									$upload_result = $this->uploadReplyImage( $oauth_object, 
+																			$photo_url_list, 
+																			$res["id"], 
+																			$res["user"]["screen_name"], 
+																			$mention_list );
 
-								if ( array_key_exists( "errors", $upload_result ) ) {
-									$errors = $upload_result->errors;
-									foreach ($errors as $error) {
-										$error_msg = $error->code . " " . $error->message . ", " . $error_msg;
+									if ( array_key_exists( "errors", $upload_result ) ) {
+										$errors = $upload_result->errors;
+										foreach ($errors as $error) {
+											$error_msg = $error->code . " " . $error->message . ", " . $error_msg;
+										}
 									}
 								}
-
+								else {
+									// 規制回避のため自粛
+									$error_msg = "reached at post limit(" . $post_limit . ").";
+								}
+								DatabaseHelper::insertAutoReplyLog( $database_manager, $blog_name, $error_msg );
+								$database_manager->close();
 							}
-							else {
-								// 規制回避のため自粛
-								$error_msg = "reached at post limit(" . $post_limit . ").";
-							}
-							DatabaseHelper::insertAutoReplyLog( $database_manager, $blog_name, $error_msg );
-							$database_manager->close();
 						}
 						else {
 							// print_r(" no");

@@ -125,4 +125,12 @@ class DatabaseHelper{
 		$res = $database_manager->select( $query );
 		return $res[0]['count'];
 	}
+
+	// auto_reply_logの削除
+	public static function deleteAutoReplyLog( $database_manager ){
+
+		$query = "DELETE FROM auto_reply_log WHERE posted_at < current_date";
+		return $database_manager->insert( $query );
+	}
+
 }

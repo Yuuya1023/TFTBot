@@ -64,3 +64,14 @@ crontab -e
 
 00 12 * * * /usr/bin/php /var/www/cron/delete_log.php
 00 12 * * * /usr/bin/php /var/www/cron/regist.php
+
+
+// プロセス確認
+ps -ef
+
+// プロセス消去
+kill [プロセスID]
+
+// プロセス常駐
+nohup php hoge.php &
+
