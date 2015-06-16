@@ -17,10 +17,10 @@ class TwitterPostManager
 
 	public function uploadImage( $oauth_object, $photo_url_list ){
 
-		return $this->uploadReplyImage( $oauth_object, $photo_url_list, null, null );
+		return $this->uploadReplyImage( $oauth_object, $photo_url_list, null, null, null );
 	}
 
-	public function uploadReplyImage( $oauth_object, $photo_url_list, $reply_to_status_id, $screen_name ){
+	public function uploadReplyImage( $oauth_object, $photo_url_list, $reply_to_status_id, $screen_name, $mentions ){
 
 		//接続
 		$connection = $this->connect( $oauth_object );
@@ -39,8 +39,25 @@ class TwitterPostManager
 		// 投稿
 		$parameters;
 		if ( $reply_to_status_id !== null && $screen_name !== null ) {
+			// リプの巻き込み
+			$mention = "";
+			if ( $mentions !== null && count($mentions) ) {
+				$mention_list = array($screen_name);
+				for ($i=0; $i < count($mentions) ; $i++) { 
+					$mention_list[count($mention_list)] = $mentions[$i]["screen_name"];
+				}
+
+				//配列で重複している物を削除する
+				$mention_list = array_unique($mention_list);
+				$mention_list = array_values($mention_list);
+
+				$mention = "@" . implode(" @", $mention_list);
+			}
+			else {
+				$mention = "@" . $screen_name;
+			}
 			$parameters = array(
-			    'status' => '@' . $screen_name,
+			    'status' => $mention,
 			    'media_ids' => implode( ",", $media_ids),
 			    'in_reply_to_status_id' => $reply_to_status_id,
 			);
@@ -108,6 +125,7 @@ class TwitterPostManager
 		                // . 'Authorization: OAuth ' . http_build_query($oauth_parameters, '', ',', PHP_QUERY_RFC3986) . "\r\n"
 		                . 'Authorization: OAuth ' . $this->http_build_query_rfc_3986($oauth_parameters, ',') . "\r\n"
 		                . "\r\n");
+
 		    while (!feof($fp)) {
 		        $res = fgets($fp);
 				$res = json_decode($res, true);
@@ -116,28 +134,53 @@ class TwitterPostManager
 
 				if ( $res && array_key_exists( "id", $res)) {
 					$retweeted = $res["retweeted"];
-					if ( !$retweeted ) {
-						print_r(" debug -> " . $res["id"]);
-						print_r(" debug -> " . $res["text"]);
-						print_r("\n");
+					if ( !$retweeted && $retweeted === false ) {
 
 						$match_text = implode("|", $match_text_list);
-   						if( preg_match("/" . $match_text . "/u", $res['text']) ) {
+						$text = "" .  $res['text'];
+   						if( preg_match("/" . $match_text . "/u", $text) ) {
 							print_r(" hit!!!!!!!!!");
+							print_r(" id->" . $res["id"]);
+							print_r(" @" . $res["user"]["screen_name"]);
+							print_r(" text->" . $res["text"]);
+							print_r("\n");
 
-							// $database_manager = new DatabaseManager();
-							// $database_manager->connect();
+							$database_manager = new DatabaseManager();
+							$database_manager->connect();
 
-							// $photo_url = DatabaseHelper::selectRandomPhotoUrlFromTumblrPost( $database_manager, $blog_name );
-							// $photo_url_list = array($photo_url);
-							// $this->uploadReplyImage( $oauth_object, $photo_url_list, $res["id"], $res["user"]["screen_name"] );
+							$count = DatabaseHelper::selectCountFromAutoReplyLog( $database_manager );
 
-							// $database_manager->close();
+							// 規制回避のため直近15分の間に100件まで
+							$error_msg = "";
+							$post_limit = 100;
+							if ( $count < $post_limit ) {
+								$photo_url = DatabaseHelper::selectRandomPhotoUrlFromTumblrPost( $database_manager, $blog_name );
+								$photo_url_list = array($photo_url);
+								$upload_result = $this->uploadReplyImage( $oauth_object, 
+																		$photo_url_list, 
+																		$res["id"], 
+																		$res["user"]["screen_name"], 
+																		$res["entities"]["user_mentions"] );
+
+								if ( array_key_exists( "errors", $upload_result ) ) {
+									$errors = $upload_result->errors;
+									foreach ($errors as $error) {
+										$error_msg = $error->code . " " . $error->message . ", " . $error_msg;
+									}
+								}
+
+							}
+							else {
+								// 規制回避のため自粛
+								$error_msg = "reached at post limit(" . $post_limit . ").";
+							}
+							DatabaseHelper::insertAutoReplyLog( $database_manager, $blog_name, $error_msg );
+							$database_manager->close();
 						}
 						else {
 							print_r(" no");
+							print_r("\n");
 						}
-						print_r("\n");
 					}
 				}
 		    }

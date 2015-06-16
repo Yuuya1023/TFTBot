@@ -16,13 +16,11 @@ twitter_post_log
 -error_msg
 -posted_at
 
-// クエリ
-CREATE DATABASE TFTbot CHARACTER SET utf8;
-
-show databases;
-
-CREATE TABLE 
-
+auto_reply_log
+-id
+-blog_name
+-error_msg
+-posted_at
 
 // 登録
 たんぶらーから一覧取得
@@ -40,3 +38,4 @@ twiiter_post_idが
  twitter_postからツイート内容取得してそのままツイート
 ↓
 ログに保存
+

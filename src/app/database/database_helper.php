@@ -110,4 +110,19 @@ class DatabaseHelper{
 		$query = "DELETE FROM twitter_post_log WHERE posted_at < current_date";
 		return $database_manager->insert( $query );
 	}
+
+	// auto_reply_logに登録
+	public static function insertAutoReplyLog( $database_manager, $blog_name, $error_msg ){
+
+		$query = "INSERT INTO auto_reply_log (blog_name, error_msg) VALUES ('" . $blog_name . "', '" . $error_msg . "')";
+		return $database_manager->insert( $query );
+	}
+
+	// auto_reply_logから15分前までの投稿数を取得
+	public static function selectCountFromAutoReplyLog( $database_manager ){
+
+		$query = "SELECT count(*) AS count  FROM auto_reply_log WHERE posted_at > addtime(now(),'-00:15:00')";
+		$res = $database_manager->select( $query );
+		return $res[0]['count'];
+	}
 }
