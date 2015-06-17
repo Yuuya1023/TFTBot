@@ -10,6 +10,8 @@ use Abraham\TwitterOAuth\TwitterOAuth;
 class TwitterPostManager
 {
 
+	private $retryCount = 0;
+
 	private function connect( $oauth_object ){
 
 		$connection = new TwitterOAuth($oauth_object->getConsumerKey(), $oauth_object->getConsumerSecret(), $oauth_object->getAccessToken(), $oauth_object->getAccessTokenSecret());
@@ -127,13 +129,13 @@ class TwitterPostManager
 		                . 'Authorization: OAuth ' . $this->http_build_query_rfc_3986($oauth_parameters, ',') . "\r\n"
 		                . "\r\n");
 
-		    while (!feof($fp)) {
+		    while ( !feof($fp) ) {
 				$streaming_obj = new StreamingObject();
 				$streaming_obj->init( fgets($fp) );
 
 				if ( $streaming_obj->isValidResponse() ) {
 					// デバッグ
-					$streaming_obj->displayDetail( $match_text_list );
+					// $streaming_obj->displayDetail( $match_text_list );
 
 					// リツイートには反応しない,指定した文字列が入っているか
 					if ( !$streaming_obj->isRetweeted() && $streaming_obj->isIncludeText( $match_text_list ) ) {
@@ -148,6 +150,14 @@ class TwitterPostManager
 				}
 		    }
 		    fclose($fp);
+
+		    // リトライ
+		    $this->retryCount++;
+		    if ( $this->retryCount < 20 ) {
+		  		$this->recordRetryCount();
+		  		$this->streaming( $oauth_object, $my_screen_name, $match_text_list, $blog_name );
+		    }
+
 		}
 	}
 
@@ -197,6 +207,16 @@ class TwitterPostManager
 			$error_msg = "reached at post limit(" . $post_limit . ").";
 		}
 		DatabaseHelper::insertAutoReplyLog( $database_manager, $blog_name, $error_msg );
+		$database_manager->close();
+	}
+
+
+	private function recordRetryCount() {
+
+		$database_manager = new DatabaseManager();
+		$database_manager->connect();
+		$error_msg = "connection failed. retry count is " . $this->retryCount;
+		DatabaseHelper::insertAutoReplyLog( $database_manager, "-1", $error_msg );
 		$database_manager->close();
 	}
 }
