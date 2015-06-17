@@ -3,6 +3,7 @@
 include_once(dirname(__FILE__) . "/../../../define.php");
 include_once(dirname(__FILE__) . "/../util/util.php");
 include_once(dirname(__FILE__) . "/oauth_object.php");
+include_once(dirname(__FILE__) . "/streaming_object.php");
 require_once(dirname(__FILE__) . "/lib/twitteroauth/autoload.php");
 use Abraham\TwitterOAuth\TwitterOAuth;
 
@@ -127,67 +128,21 @@ class TwitterPostManager
 		                . "\r\n");
 
 		    while (!feof($fp)) {
-		        $res = fgets($fp);
-				$res = json_decode($res, true);
+				$streaming_obj = new StreamingObject();
+				$streaming_obj->init( fgets($fp) );
 
-				// print_r($res);
+				if ( $streaming_obj->isValidResponse() ) {
+					// デバッグ
+					$streaming_obj->displayDetail( $match_text_list );
 
-				if ( $res && array_key_exists( "id", $res) ) {
-					$text = "" .  $res['text'];
-					// print_r(" @" . $res["user"]["screen_name"]);
-					// print_r(" text->" . $text);
+					// リツイートには反応しない,指定した文字列が入っているか
+					if ( !$streaming_obj->isRetweeted() && $streaming_obj->isIncludeText( $match_text_list ) ) {
+						// メンションのリスト作成
+						$mention_list = $streaming_obj->getMentionList();
 
-					// リツイートには反応しない
-					if ( !preg_match("/RT/u", $text) ) {
-						// 指定した文字列が入っているか
-						$match_text = implode("|", $match_text_list);
-   						if( preg_match("/" . $match_text . "/u", $text) ) {
-							// print_r(" hit!!!!!!!!!");
-							// print_r("\n");
-
-							// メンションのリスト作成
-							$mention_list = array();
-							$mentions = $res["entities"]["user_mentions"];
-							for ($i=0; $i < count($mentions) ; $i++) { 
-								$mention_list[count($mention_list)] = $mentions[$i]["screen_name"];
-							}
-
-							// 自分を巻き込んでる場合は反応しない
-							if ( !in_array( $my_screen_name, $mention_list ) ) {
-								$database_manager = new DatabaseManager();
-								$database_manager->connect();
-
-								// 規制回避のため直近15分の間に100件まで
-								$error_msg = "";
-								$post_limit = 50;
-								$count = DatabaseHelper::selectCountFromAutoReplyLog( $database_manager );
-								if ( $count < $post_limit ) {
-									$photo_url = DatabaseHelper::selectRandomPhotoUrlFromTumblrPost( $database_manager, $blog_name );
-									$photo_url_list = array($photo_url);
-									$upload_result = $this->uploadReplyImage( $oauth_object, 
-																			$photo_url_list, 
-																			$res["id"], 
-																			$res["user"]["screen_name"], 
-																			$mention_list );
-
-									if ( array_key_exists( "errors", $upload_result ) ) {
-										$errors = $upload_result->errors;
-										foreach ($errors as $error) {
-											$error_msg = $error->code . " " . $error->message . ", " . $error_msg;
-										}
-									}
-								}
-								else {
-									// 規制回避のため自粛
-									$error_msg = "reached at post limit(" . $post_limit . ").";
-								}
-								DatabaseHelper::insertAutoReplyLog( $database_manager, $blog_name, $error_msg );
-								$database_manager->close();
-							}
-						}
-						else {
-							// print_r(" no");
-							// print_r("\n");
+						// 自分を巻き込んでる場合は反応しない
+						if ( !in_array( $my_screen_name, $mention_list ) ) {
+							$this->replyImage( $oauth_object, $streaming_obj, $mention_list, $blog_name );
 						}
 					}
 				}
@@ -210,6 +165,39 @@ class TwitterPostManager
 	        }
 	    }
 	    return trim($r,$arg_separator);
+	}
+
+
+	private function replyImage( $oauth_object, $streaming_obj, $mention_list, $blog_name ) {
+		$database_manager = new DatabaseManager();
+		$database_manager->connect();
+
+		// 規制回避のため直近15分の間に50件まで
+		$error_msg = "";
+		$post_limit = 50;
+		$count = DatabaseHelper::selectCountFromAutoReplyLog( $database_manager );
+		if ( $count < $post_limit ) {
+			$photo_url = DatabaseHelper::selectRandomPhotoUrlFromTumblrPost( $database_manager, $blog_name );
+			$photo_url_list = array($photo_url);
+			$upload_result = $this->uploadReplyImage( $oauth_object, 
+													$photo_url_list, 
+													$streaming_obj->getId(), 
+													$streaming_obj->getScreenName(), 
+													$mention_list );
+
+			if ( array_key_exists( "errors", $upload_result ) ) {
+				$errors = $upload_result->errors;
+				foreach ($errors as $error) {
+					$error_msg = $error->code . " " . $error->message . ", " . $error_msg;
+				}
+			}
+		}
+		else {
+			// 規制回避のため自粛
+			$error_msg = "reached at post limit(" . $post_limit . ").";
+		}
+		DatabaseHelper::insertAutoReplyLog( $database_manager, $blog_name, $error_msg );
+		$database_manager->close();
 	}
 }
 
