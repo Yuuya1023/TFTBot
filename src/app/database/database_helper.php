@@ -108,6 +108,7 @@ class DatabaseHelper{
 	public static function deleteTwitterPostLog( $database_manager ){
 
 		$query = "DELETE FROM twitter_post_log WHERE posted_at < current_date";
+		DatabaseHelper::optimizeTable( $database_manager, "twitter_post_log" );
 		return $database_manager->insert( $query );
 	}
 
@@ -130,7 +131,15 @@ class DatabaseHelper{
 	public static function deleteAutoReplyLog( $database_manager ){
 
 		$query = "DELETE FROM auto_reply_log WHERE posted_at < current_date";
+		DatabaseHelper::optimizeTable( $database_manager, "auto_reply_log" );
 		return $database_manager->insert( $query );
+	}
+
+	// テーブルを最適化
+	public static function optimizeTable( $database_manager, $table_name ){
+
+		$query = "OPTIMIZE TABLE " . $table_name;
+		$database_manager->insert( $query );
 	}
 
 }
