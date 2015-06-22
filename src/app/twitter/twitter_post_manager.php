@@ -134,6 +134,7 @@ class TwitterPostManager
 		                . "\r\n");
 
 		    while ( !feof($fp) ) {
+				// var_dump( feof($fp) );
 				$streaming_obj = new StreamingObject();
 				$streaming_obj->init( fgets($fp) );
 
@@ -153,7 +154,7 @@ class TwitterPostManager
 					}
 				}
 				else {
-					var_dump( $streaming_obj->getJson() );
+					// var_dump( $streaming_obj->getJson() );
 				}
 		    }
 		    fclose($fp);
