@@ -8,6 +8,9 @@ class StreamingObject
 		$this->responseJson = json_decode($response, true);
 	}
 
+	public function getJson(){
+		return $this->responseJson;
+	}
 
 	public function isValidResponse(){
 		return $this->responseJson && array_key_exists( "id", $this->responseJson );
@@ -44,13 +47,6 @@ class StreamingObject
 		}
 		return $mention_list;
 	}
-
-
-
-
-
-
-
 
 
 	public function displayDetail( $match_text_list ){

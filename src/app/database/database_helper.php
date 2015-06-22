@@ -27,15 +27,18 @@ class DatabaseHelper{
 	}
 
 	// ランダムで画像urlを取得
-	public static function selectRandomPhotoUrlFromTumblrPost( $database_manager, $blog_name ){
+	public static function selectRandomPhotoUrlFromTumblrPost( $database_manager, $blog_name, $limit_row ){
 
-		$query = "SELECT photo_url FROM tumblr_post WHERE blog_name = '" . $blog_name . "' ORDER BY RAND() LIMIT 1";
+		$query = "SELECT photo_url FROM tumblr_post WHERE blog_name = '" . $blog_name . "' ORDER BY RAND() LIMIT " . $limit_row;
 		// echo "<p>{$query}";
 		$res = $database_manager->select( $query );
-		if (count($res) === 0) {
-			return null;
+		if (count($res) === 0) return null;
+		
+		$photo_url_list = array();
+		for ($i=0; $i < count($res); $i++) {
+			$photo_url_list[] = $res[$i]["photo_url"];
 		}
-		return $res[0]["photo_url"];
+		return $photo_url_list;
 	}
 
 	// tumblr_postからランダム投稿を取得

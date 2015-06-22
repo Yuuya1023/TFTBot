@@ -31,7 +31,9 @@ class TwitterPostManager
 		$media_ids = array();
 		foreach ($photo_url_list as $photo_url) {
 			$media_id = $connection->upload("media/upload", array("media" => $photo_url));
-			$media_ids[count($media_ids)] = $media_id->media_id_string;
+			if ( !array_key_exists( "error", $media_id ) ) {
+				$media_ids[count($media_ids)] = $media_id->media_id_string;
+			}
 		}
 
 		// var_dump($media_ids);
@@ -44,7 +46,7 @@ class TwitterPostManager
 		if ( $reply_to_status_id !== null && $screen_name !== null ) {
 			// リプの巻き込み
 			$mention = "";
-			if ( $mentions !== null && count($mentions) ) {
+			if ( $mentions !== null && count($mentions) > 0 ) {
 				$mention_list = array($screen_name);
 				for ($i=0; $i < count($mentions) ; $i++) { 
 					$mention_list[count($mention_list)] = $mentions[$i];
@@ -121,7 +123,9 @@ class TwitterPostManager
  
  
 		// 接続＆データ取得
-		$fp = fsockopen("ssl://userstream.twitter.com", 443);
+		$errno = null;
+ 		$errstr = null;
+		$fp = fsockopen("ssl://userstream.twitter.com", 443, $errno, $errstr);
 		if ($fp) {
 		    fwrite($fp, "GET " . $url . " HTTP/1.1\r\n"
 		                . "Host: userstream.twitter.com\r\n"
@@ -135,7 +139,7 @@ class TwitterPostManager
 
 				if ( $streaming_obj->isValidResponse() ) {
 					// デバッグ
-					// $streaming_obj->displayDetail( $match_text_list );
+					$streaming_obj->displayDetail( $match_text_list );
 
 					// リツイートには反応しない,指定した文字列が入っているか
 					if ( !$streaming_obj->isRetweeted() && $streaming_obj->isIncludeText( $match_text_list ) ) {
@@ -148,16 +152,26 @@ class TwitterPostManager
 						}
 					}
 				}
+				else {
+					var_dump( $streaming_obj->getJson() );
+				}
 		    }
 		    fclose($fp);
 
 		    // リトライ
 		    $this->retryCount++;
 		    if ( $this->retryCount < 20 ) {
-		  		$this->recordRetryCount();
+				$error_msg = "connection failed. retry count is " . $this->retryCount;
+				$this->recordError( $error_msg );
+
+				sleep( 60 );
 		  		$this->streaming( $oauth_object, $my_screen_name, $match_text_list, $blog_name );
 		    }
-
+		}
+		else {
+			// ソケット通信エラー
+			$error_msg = $errno . " " . $errstr;
+			$this->recordError( $error_msg );
 		}
 	}
 
@@ -187,8 +201,8 @@ class TwitterPostManager
 		$post_limit = 50;
 		$count = DatabaseHelper::selectCountFromAutoReplyLog( $database_manager );
 		if ( $count < $post_limit ) {
-			$photo_url = DatabaseHelper::selectRandomPhotoUrlFromTumblrPost( $database_manager, $blog_name );
-			$photo_url_list = array($photo_url);
+			$photo_url_list = DatabaseHelper::selectRandomPhotoUrlFromTumblrPost( $database_manager, $blog_name, 1 );
+			// $photo_url_list = array($photo_url);
 			$upload_result = $this->uploadReplyImage( $oauth_object, 
 													$photo_url_list, 
 													$streaming_obj->getId(), 
@@ -211,14 +225,15 @@ class TwitterPostManager
 	}
 
 
-	private function recordRetryCount() {
+	private function recordError( $error_msg ) {
 
 		$database_manager = new DatabaseManager();
 		$database_manager->connect();
-		$error_msg = "connection failed. retry count is " . $this->retryCount;
 		DatabaseHelper::insertAutoReplyLog( $database_manager, "-1", $error_msg );
 		$database_manager->close();
+
 	}
+
 }
 
 ?>
