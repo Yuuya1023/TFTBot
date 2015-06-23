@@ -12,16 +12,19 @@ class TwitterPostManager
 
 	private $retryCount = 0;
 
+
 	private function connect( $oauth_object ){
 
 		$connection = new TwitterOAuth($oauth_object->getConsumerKey(), $oauth_object->getConsumerSecret(), $oauth_object->getAccessToken(), $oauth_object->getAccessTokenSecret());
 		return $connection;
 	}
 
+
 	public function uploadImage( $oauth_object, $photo_url_list ){
 
 		return $this->uploadReplyImage( $oauth_object, $photo_url_list, null, null, null );
 	}
+
 
 	public function uploadReplyImage( $oauth_object, $photo_url_list, $reply_to_status_id, $screen_name, $mentions ){
 
@@ -81,6 +84,7 @@ class TwitterPostManager
 		return $result;
 	}
 
+
 	public function uploadText( $oauth_object, $text ){
 
 		//接続
@@ -95,11 +99,145 @@ class TwitterPostManager
 		return $result;
 	}
 
+
 	public function streaming( $oauth_object, $my_screen_name, $match_text_list, $blog_name ){
 		$url = 'https://userstream.twitter.com/1.1/user.json';
 		$method = 'GET';
  
 		// パラメータ
+		$oauth_parameters = $this->createOauthParams( $url, $method, $oauth_object, null );
+ 
+		// 接続＆データ取得
+		$errno = null;
+ 		$errstr = null;
+ 		try {
+			$fp = fsockopen("ssl://userstream.twitter.com", 443, $errno, $errstr);
+			if ($fp) {
+			    fwrite($fp, "GET " . $url . " HTTP/1.1\r\n"
+			                . "Host: userstream.twitter.com\r\n"
+			                . 'Authorization: OAuth ' . $this->http_build_query_rfc_3986($oauth_parameters, ',') . "\r\n"
+			                . "\r\n");
+
+			    while ( !feof($fp) ) {
+					// var_dump( feof($fp) );
+					$streaming_obj = new StreamingObject();
+					$streaming_obj->init( fgets($fp) );
+
+					if ( $streaming_obj->isValidResponse() ) {
+						// デバッグ
+						$streaming_obj->displayDetail( $match_text_list );
+
+						// リツイートには反応しない,指定した文字列が入っているか
+						if ( !$streaming_obj->isRetweeted() && $streaming_obj->isIncludeText( $match_text_list ) ) {
+							// メンションのリスト作成
+							$mention_list = $streaming_obj->getMentionList();
+
+							// 自分を巻き込んでる場合は反応しない
+							if ( !in_array( $my_screen_name, $mention_list ) ) {
+								$this->replyImage( $oauth_object, $streaming_obj, $mention_list, $blog_name );
+							}
+						}
+					}
+					else {
+						// var_dump( $streaming_obj->getJson() );
+					}
+			    }
+			    fclose($fp);
+
+			    // リトライ
+			    $this->retryCount++;
+			    if ( $this->retryCount < 20 ) {
+					$error_msg = "connection failed. retry count is " . $this->retryCount;
+					$this->recordError( $error_msg );
+
+					sleep( 60 );
+			  		$this->streaming( $oauth_object, $my_screen_name, $match_text_list, $blog_name );
+			    }
+			}
+			else {
+				// ソケット通信エラー
+				$error_msg = $errno . " " . $errstr;
+				$this->recordError( $error_msg );
+			}
+ 		} 
+ 		catch (Exception $e) {
+ 			// Twitterライブラリ内ですろーされた例外
+			$this->recordError( $e->getMessage() );
+
+			sleep( 60 * 10 );
+	  		$this->streaming( $oauth_object, $my_screen_name, $match_text_list, $blog_name );
+ 		}
+	}
+
+	// public function streamingFilter( $oauth_object, $match_text_list ){
+
+	// 	$url = 'https://stream.twitter.com/1.1/statuses/sample.json';
+	// 	$method = 'GET';
+ // 		print_r( $url );
+
+	// 	// $get_parameters = array(
+	// 	//     'locations' => '132.2,29.9,146.2,39.0,138.4,33.5,146.1,46.20',
+	// 	// );
+
+	// 	// パラメータ
+	// 	$oauth_parameters = $this->createOauthParams( $url, $method, $oauth_object, $get_parameters );
+	// 	var_dump($oauth_parameters);
+ 
+	// 	// 接続＆データ取得
+	// 	$errno = null;
+ // 		$errstr = null;
+	// 	$fp = fsockopen("ssl://userstream.twitter.com", 443, $errno, $errstr);
+	// 	if ($fp) {
+	// 	    fwrite($fp, "GET " . $url . " HTTP/1.1\r\n"
+	// 	                . "Host: userstream.twitter.com\r\n"
+	// 	                . 'Authorization: OAuth ' . $this->http_build_query_rfc_3986($oauth_parameters, ',') . "\r\n"
+	// 	                . "\r\n");
+
+	// 	    while ( !feof($fp) ) {
+	// 			// var_dump( feof($fp) );
+	// 			$streaming_obj = new StreamingObject();
+	// 			$streaming_obj->init( fgets($fp) );
+
+	// 			if ( $streaming_obj->isValidResponse() ) {
+	// 				// デバッグ
+	// 				$streaming_obj->displayDetail( $match_text_list );
+
+	// 				// // リツイートには反応しない,指定した文字列が入っているか
+	// 				// if ( !$streaming_obj->isRetweeted() && $streaming_obj->isIncludeText( $match_text_list ) ) {
+	// 				// 	// メンションのリスト作成
+	// 				// 	$mention_list = $streaming_obj->getMentionList();
+
+	// 				// 	// 自分を巻き込んでる場合は反応しない
+	// 				// 	if ( !in_array( $my_screen_name, $mention_list ) ) {
+	// 				// 		$this->replyImage( $oauth_object, $streaming_obj, $mention_list, $blog_name );
+	// 				// 	}
+	// 				// }
+	// 			}
+	// 			else {
+	// 				var_dump( $streaming_obj->getJson() );
+	// 			}
+	// 	    }
+	// 	    fclose($fp);
+
+	// 	    // リトライ
+	// 	    $this->retryCount++;
+	// 	    if ( $this->retryCount < 20 ) {
+	// 			$error_msg = "connection failed. retry count is " . $this->retryCount;
+	// 			$this->recordError( $error_msg );
+
+	// 			sleep( 60 );
+	// 	  		$this->streaming( $oauth_object, "", $match_text_list, "" );
+	// 	    }
+	// 	}
+	// 	else {
+	// 		// ソケット通信エラー
+	// 		$error_msg = $errno . " " . $errstr;
+	// 		$this->recordError( $error_msg );
+	// 	}
+	// }
+
+	private function createOauthParams( $url, $method, $oauth_object, $get_parameters ) {
+
 		$oauth_parameters = array(
 		    'oauth_consumer_key' => $oauth_object->getConsumerKey(),
 		    'oauth_nonce' => microtime(),
@@ -110,71 +248,26 @@ class TwitterPostManager
 		);
  
 		// 署名を作る
-		$a = $oauth_parameters;
+		$a = null;
+		if ( $get_parameters !== null && count($get_parameters) > 0 ) {
+			$a = array_merge( $oauth_parameters, $get_parameters );
+		}
+		else {
+			$a = $oauth_parameters;
+		}
+
 		ksort($a);
 		$base_string = implode('&', array(
 		    rawurlencode($method),
 		    rawurlencode($url),
-		    // rawurlencode(http_build_query($a, '', '&', PHP_QUERY_RFC3986))
 		    rawurlencode($this->http_build_query_rfc_3986($a, '&'))
 		));
 		$key = implode('&', array(rawurlencode($oauth_object->getConsumerSecret()), rawurlencode($oauth_object->getAccessTokenSecret())));
 		$oauth_parameters['oauth_signature'] = base64_encode(hash_hmac('sha1', $base_string, $key, true));
- 
- 
-		// 接続＆データ取得
-		$errno = null;
- 		$errstr = null;
-		$fp = fsockopen("ssl://userstream.twitter.com", 443, $errno, $errstr);
-		if ($fp) {
-		    fwrite($fp, "GET " . $url . " HTTP/1.1\r\n"
-		                . "Host: userstream.twitter.com\r\n"
-		                // . 'Authorization: OAuth ' . http_build_query($oauth_parameters, '', ',', PHP_QUERY_RFC3986) . "\r\n"
-		                . 'Authorization: OAuth ' . $this->http_build_query_rfc_3986($oauth_parameters, ',') . "\r\n"
-		                . "\r\n");
 
-		    while ( !feof($fp) ) {
-				// var_dump( feof($fp) );
-				$streaming_obj = new StreamingObject();
-				$streaming_obj->init( fgets($fp) );
-
-				if ( $streaming_obj->isValidResponse() ) {
-					// デバッグ
-					$streaming_obj->displayDetail( $match_text_list );
-
-					// リツイートには反応しない,指定した文字列が入っているか
-					if ( !$streaming_obj->isRetweeted() && $streaming_obj->isIncludeText( $match_text_list ) ) {
-						// メンションのリスト作成
-						$mention_list = $streaming_obj->getMentionList();
-
-						// 自分を巻き込んでる場合は反応しない
-						if ( !in_array( $my_screen_name, $mention_list ) ) {
-							$this->replyImage( $oauth_object, $streaming_obj, $mention_list, $blog_name );
-						}
-					}
-				}
-				else {
-					// var_dump( $streaming_obj->getJson() );
-				}
-		    }
-		    fclose($fp);
-
-		    // リトライ
-		    $this->retryCount++;
-		    if ( $this->retryCount < 20 ) {
-				$error_msg = "connection failed. retry count is " . $this->retryCount;
-				$this->recordError( $error_msg );
-
-				sleep( 60 );
-		  		$this->streaming( $oauth_object, $my_screen_name, $match_text_list, $blog_name );
-		    }
-		}
-		else {
-			// ソケット通信エラー
-			$error_msg = $errno . " " . $errstr;
-			$this->recordError( $error_msg );
-		}
+		return $oauth_parameters;
 	}
+
 
 	private function http_build_query_rfc_3986($query_data, $arg_separator='&') {
 	    $r = '';
