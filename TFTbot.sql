@@ -73,8 +73,18 @@ CREATE TABLE IF NOT EXISTS `auto_reply_log` (
   `error_msg` varchar(256) NULL,
   `posted_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=8 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
+--
+-- テーブルの構造 `twitter_search_word`
+--
+
+CREATE TABLE IF NOT EXISTS `twitter_search_word` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `word` varchar(128) NOT NULL,
+  `latest_tweet_id` bigint(20) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
