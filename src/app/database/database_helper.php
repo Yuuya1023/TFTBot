@@ -145,4 +145,19 @@ class DatabaseHelper{
 		$database_manager->insert( $query );
 	}
 
+	// twitter_search_wordからデータ取得
+	public static function selectFromTwitterSearchWord( $database_manager, $word_id ){
+
+		$query = "SELECT * FROM twitter_search_word WHERE id = " . $word_id;
+		$res = $database_manager->select( $query );
+		return $res[0];
+	}
+
+	// twitter_search_wordのlatest_tweet_idを更新
+	public static function updateLatestTweetId( $database_manager, $latest_id, $word_id ){
+
+		$query = "UPDATE twitter_search_word SET latest_tweet_id = ". $latest_id . " WHERE id = " . $word_id;
+		return $database_manager->insert( $query );
+	}
+
 }

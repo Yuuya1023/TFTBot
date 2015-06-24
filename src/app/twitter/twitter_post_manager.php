@@ -45,7 +45,10 @@ class TwitterPostManager
 		// echo "<p><p>";
 
 		// 投稿
-		$parameters;
+		$parameters = array(
+		    'status' => '',
+		    'media_ids' => implode( ",", $media_ids),
+		);
 		if ( $reply_to_status_id !== null && $screen_name !== null ) {
 			// リプの巻き込み
 			$mention = "";
@@ -64,18 +67,11 @@ class TwitterPostManager
 			else {
 				$mention = "@" . $screen_name;
 			}
-			$parameters = array(
-			    'status' => $mention,
-			    'media_ids' => implode( ",", $media_ids),
-			    'in_reply_to_status_id' => $reply_to_status_id,
-			);
+
+			$parameters["status"] = $mention;
+			$parameters["in_reply_to_status_id"] = $reply_to_status_id;
 		}
-		else {
-			$parameters = array(
-			    'status' => '',
-			    'media_ids' => implode( ",", $media_ids),
-			);
-		}
+
 		$result = $connection->post('statuses/update', $parameters);
 
 		// $json = json_encode($result);
@@ -100,33 +96,48 @@ class TwitterPostManager
 	}
 
 
-	public function search( $oauth_object, $match_text_list ){
+	public function sendDirectMessage( $oauth_object, $screen_name, $text ){
+
+		//接続
+		$connection = $this->connect( $oauth_object );
+
+		$param = array(
+		    "screen_name"	=>	$screen_name,
+		    "text"	=> 	$text,
+		    );
+
+		$result = $connection->post("direct_messages/new", $param);
+
+		return $result;
+	}
+
+
+	public function search( $oauth_object, $keyword, $count, $since_id ){
 
 		$connection = $this->connect( $oauth_object );
 		 
-		$keywords = '@ticket_bot スタアニ';
-		 
 		$param = array(
-		    "q"=>$keywords,                  // keyword
-		    "lang"=>"ja",                   // language
-		    "count"=>10,                   // number of tweets
-		    "result_type"=>"recent");       // result type
-		  
-		$json = $connection->get("search/tweets", $param);
-		  
-		// $result = json_encode($json);
-		// print_r($json);
-		// print_r($result);
+		    "q"				=> $keyword,
+		    "lang"			=> "ja",
+		    "count"			=> $count,
+		    "result_type"	=> "recent",
+		    );
 
-		$statuses = $json->statuses;
-		foreach ($statuses as $s) {
-			$streaming_obj = new StreamingObject();
-			$streaming_obj->initWithJson( $s );
-
-			$streaming_obj->displayTweet();
+		if ( $since_id !== null ) {
+			$param["since_id"] = $since_id; 
 		}
+		  
+		$result = $connection->get("search/tweets", $param);
 
+		// $statuses = $result->statuses;
+		// foreach ($statuses as $s) {
+		// 	$streaming_obj = new StreamingObject();
+		// 	$streaming_obj->initWithJson( $s );
 
+		// 	$streaming_obj->displayTweet();
+		// }
+
+		return $result;
 	}
 
 

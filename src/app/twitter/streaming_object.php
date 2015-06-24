@@ -21,7 +21,11 @@ class StreamingObject
 	}
 
 	public function isRetweeted(){
-		// retweetedが使えないので一旦これで
+		// RTから始まってるやつはリツイート
+		return preg_match( "/^RT/u", $this->getText() );
+	}
+
+	public function isIncludeRT(){
 		return preg_match( "/RT/u", $this->getText() );
 	}
 
@@ -37,6 +41,10 @@ class StreamingObject
 
 	public function getText(){
 		return "" . $this->responseJson->text;
+	}
+
+	public function getUserId(){
+		return $this->responseJson->user->id;
 	}
 
 	public function getScreenName(){
@@ -57,9 +65,14 @@ class StreamingObject
 	}
 
 
+	public function generateTweetLink(){
+		return "https://twitter.com/" . $this->getScreenName() . "/status/" . $this->getId();
+	}
+
+
 	public function displayTweet(){
 		print_r("\n");
-		print_r("@" . $this->getScreenName() . " " . $this->getText() );
+		print_r($this->getId() . " @" . $this->getScreenName() . "\n" . $this->getText() );
 
 		print_r("\n");
 		print_r("Retweeted->");

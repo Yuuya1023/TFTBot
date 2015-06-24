@@ -22,20 +22,7 @@ auto_reply_log
 -error_msg
 -posted_at
 
-// 登録
-たんぶらーから一覧取得
-↓
-post_idとphoto_urlで重複チェックしてなければ登録
-
-// 投稿
-tumblr_postからランダム取得
-↓
-twiiter_post_idが
-→null
- twitterにphoto_urlの画像をアップロード
- 結果をtwitter_postに登録し、tumblr_postのtwitter_post_idに登録
-→値あり
- twitter_postからツイート内容取得してそのままツイート
-↓
-ログに保存
-
+twitter_search_word
+-id
+-word
+-latest_tweet_id
