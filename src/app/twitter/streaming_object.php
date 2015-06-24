@@ -5,7 +5,11 @@ class StreamingObject
 	private $responseJson = null;
 
 	public function init( $response ){
-		$this->responseJson = json_decode($response, true);
+		$this->responseJson = json_decode($response);
+	}
+
+	public function initWithJson( $json ){
+		$this->responseJson = $json;
 	}
 
 	public function getJson(){
@@ -22,32 +26,48 @@ class StreamingObject
 	}
 
 	public function isIncludeText( $match_text_list ){
+		if ( $match_text_list === null || count($match_text_list) === 0 ) return false;
 		$match_text = implode("|", $match_text_list);
 		return preg_match("/" . $match_text . "/u", $this->getText());
 	}
 
 	public function getId(){
-		return $this->responseJson["id"];
+		return $this->responseJson->id;
 	}
 
 	public function getText(){
-		return "" . $this->responseJson['text'];
+		return "" . $this->responseJson->text;
 	}
 
 	public function getScreenName(){
-		return $this->responseJson["user"]["screen_name"];
+		return $this->responseJson->user->screen_name;
 	}
 
 	public function getMentionList(){
 		// メンションリスト作成
 		$mention_list = array();
-		$mentions = $this->responseJson["entities"]["user_mentions"];
-		for ($i=0; $i < count($mentions) ; $i++) { 
-			$mention_list[count($mention_list)] = $mentions[$i]["screen_name"];
+		$mentions = $this->responseJson->entities->user_mentions;
+		// for ($i=0; $i < count($mentions) ; $i++) { 
+		// 	$mention_list[count($mention_list)] = $mentions[$i]["screen_name"];
+		// }
+		foreach ($mentions as $mention) {
+			$mention_list[] = $mention->screen_name;
 		}
 		return $mention_list;
 	}
 
+
+	public function displayTweet(){
+		print_r("\n");
+		print_r("@" . $this->getScreenName() . " " . $this->getText() );
+
+		print_r("\n");
+		print_r("Retweeted->");
+		if ( $this->isRetweeted() ) print_r("true");
+		else  print_r("false");
+
+		print_r("\n");
+	}
 
 	public function displayDetail( $match_text_list ){
 		print_r("\n");

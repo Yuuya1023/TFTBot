@@ -51,8 +51,8 @@ class TwitterPostManager
 			$mention = "";
 			if ( $mentions !== null && count($mentions) > 0 ) {
 				$mention_list = array($screen_name);
-				for ($i=0; $i < count($mentions) ; $i++) { 
-					$mention_list[count($mention_list)] = $mentions[$i];
+				foreach ($mentions as $s) { 
+					$mention_list[] = $s;
 				}
 
 				//配列で重複している物を削除する
@@ -97,6 +97,36 @@ class TwitterPostManager
 		// echo indent($json);
 
 		return $result;
+	}
+
+
+	public function search( $oauth_object, $match_text_list ){
+
+		$connection = $this->connect( $oauth_object );
+		 
+		$keywords = '@ticket_bot スタアニ';
+		 
+		$param = array(
+		    "q"=>$keywords,                  // keyword
+		    "lang"=>"ja",                   // language
+		    "count"=>10,                   // number of tweets
+		    "result_type"=>"recent");       // result type
+		  
+		$json = $connection->get("search/tweets", $param);
+		  
+		// $result = json_encode($json);
+		// print_r($json);
+		// print_r($result);
+
+		$statuses = $json->statuses;
+		foreach ($statuses as $s) {
+			$streaming_obj = new StreamingObject();
+			$streaming_obj->initWithJson( $s );
+
+			$streaming_obj->displayTweet();
+		}
+
+
 	}
 
 
@@ -235,6 +265,7 @@ class TwitterPostManager
 	// 		$this->recordError( $error_msg );
 	// 	}
 	// }
+
 
 	private function createOauthParams( $url, $method, $oauth_object, $get_parameters ) {
 
