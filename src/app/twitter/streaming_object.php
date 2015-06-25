@@ -75,11 +75,6 @@ class StreamingObject
 		print_r($this->getId() . " @" . $this->getScreenName() . "\n" . $this->getText() );
 
 		print_r("\n");
-		print_r("Retweeted->");
-		if ( $this->isRetweeted() ) print_r("true");
-		else  print_r("false");
-
-		print_r("\n");
 	}
 
 	public function displayDetail( $match_text_list ){

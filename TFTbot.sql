@@ -82,10 +82,11 @@ CREATE TABLE IF NOT EXISTS `auto_reply_log` (
 CREATE TABLE IF NOT EXISTS `twitter_search_word` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `word` varchar(128) NOT NULL,
+  `notice_user` varchar(32) NOT NULL,
   `latest_tweet_id` bigint(20) DEFAULT NULL,
+  `disable_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
-
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
