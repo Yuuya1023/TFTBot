@@ -146,7 +146,15 @@ class DatabaseHelper{
 	}
 
 	// twitter_search_wordからデータ取得
-	public static function selectFromTwitterSearchWord( $database_manager, $word_id ){
+	public static function selectFromTwitterSearchWord( $database_manager ){
+
+		$query = "SELECT * FROM twitter_search_word WHERE disable_at is NULL OR disable_at > CURRENT_TIMESTAMP";
+		$res = $database_manager->select( $query );
+		return $res;
+	}
+
+	// twitter_search_wordからデータ取得
+	public static function selectFromTwitterSearchWordWithId( $database_manager, $word_id ){
 
 		$query = "SELECT * FROM twitter_search_word WHERE id = " . $word_id . " AND ( disable_at is NULL OR disable_at > CURRENT_TIMESTAMP )";
 		$res = $database_manager->select( $query );

@@ -14,25 +14,43 @@ include_once(dirname(__FILE__) . "/database/database_helper.php");
  *　送る
  *　↓
  *　最後のID保存
- *
- * twitter_search_word
- * -id
- * -word
- * -latest_tweet_id
  */
 
 class SearchTwitter
 {
 
-	public function search( $oauth_object, $word_id ){
+	public function search( $oauth_object ){
 
+		$twitter_manager = new TwitterPostManager();
 		$database_manager = new DatabaseManager();
 		$database_manager->connect();
 
-		$twitter_manager = new TwitterPostManager();
+		$word_res = DatabaseHelper::selectFromTwitterSearchWord( $database_manager, $twitter_manager );
+		foreach ($word_res as $o) {
+			$this->notice( $database_manager, $twitter_manager, $oauth_object, $o );
+		}
+		
+		$database_manager->close();
+	}
 
-		$word_res = DatabaseHelper::selectFromTwitterSearchWord( $database_manager, $word_id );
+
+	public function searchWithId( $oauth_object, $word_id ){
+
+		$twitter_manager = new TwitterPostManager();
+		$database_manager = new DatabaseManager();
+		$database_manager->connect();
+
+		$word_res = DatabaseHelper::selectFromTwitterSearchWordWithId( $database_manager, $twitter_manager, $word_id );
+		$this->notice( $database_manager, $twitter_manager, $oauth_object, $word_res );
+		
+		$database_manager->close();
+	}
+
+
+	private function notice( $database_manager, $twitter_manager, $oauth_object, $word_res ) {
+
 		if ( $word_res !== null ) {
+			$word_id = $word_res["id"];
 			$word = $word_res["word"];
 			$notice_user = $word_res["notice_user"];
 			$latest_tweet_id = $word_res["latest_tweet_id"];
@@ -42,7 +60,7 @@ class SearchTwitter
 			$statuses = $search_result->statuses;
 			if ( $statuses > 0 ) {
 				$latest_id = null;
-				$current_date = date('Y年m月d日 H時i分s秒');
+				$current_date = date('Y年m月d日 H時i分');
 				$direct_message_text = "search word:\n" . $word . "\nat:\n" . $current_date . "\n";
 				for ($i=0; $i < count($statuses); $i++) { 
 					$streaming_obj = new StreamingObject();
@@ -75,10 +93,7 @@ class SearchTwitter
 				DatabaseHelper::updateLatestTweetId( $database_manager, $latest_id, $word_id );
 			}
 		}
-		$database_manager->close();
 	}
-
-
 }
 
 ?>
