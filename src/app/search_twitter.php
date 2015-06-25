@@ -49,7 +49,7 @@ class SearchTwitter
 
 	private function notice( $database_manager, $twitter_manager, $oauth_object, $word_res ) {
 
-		if ( $word_res !== null ) {
+		if ( $word_res !== null && count($word_res) > 0 ) {
 			$word_id = $word_res["id"];
 			$word = $word_res["word"];
 			$notice_user = $word_res["notice_user"];
@@ -62,7 +62,8 @@ class SearchTwitter
 				$latest_id = null;
 				$current_date = date('Y年m月d日 H時i分');
 				$direct_message_text = "search word:\n" . $word . "\nat:\n" . $current_date . "\n";
-				for ($i=0; $i < count($statuses); $i++) { 
+				// for ($i=0; $i < count($statuses); $i++) {
+				for ($i=count($statuses) - 1; $i >= 0; $i--) {
 					$streaming_obj = new StreamingObject();
 					$streaming_obj->initWithJson( $statuses[$i] );
 
