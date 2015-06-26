@@ -56,7 +56,7 @@ class DatabaseHelper{
 		if (count($id_list) > 0) {
 			$ids = array(); 
 			for ($i=0; $i < count($id_list); $i++) { 
-				$ids[count($ids)] = $id_list[$i]["tumblr_post_id"];
+				$ids[] = $id_list[$i]["tumblr_post_id"];
 			}
 
 			$exclusionQuery = " AND id NOT IN (" . implode( ",", $ids) . ")";
@@ -145,6 +145,8 @@ class DatabaseHelper{
 		$database_manager->insert( $query );
 	}
 
+
+
 	// twitter_search_wordからデータ取得
 	public static function selectFromTwitterSearchWord( $database_manager ){
 
@@ -168,6 +170,23 @@ class DatabaseHelper{
 	public static function updateLatestTweetId( $database_manager, $latest_id, $word_id ){
 
 		$query = "UPDATE twitter_search_word SET latest_tweet_id = ". $latest_id . " WHERE id = " . $word_id;
+		return $database_manager->insert( $query );
+	}
+
+
+
+	// twitter_search_wordからデータ取得
+	public static function selectFromOtamesiTwitterSearchWord( $database_manager ){
+
+		$query = "SELECT * FROM otamesi_twitter_search_word WHERE disable_at is NULL OR disable_at > CURRENT_TIMESTAMP";
+		$res = $database_manager->select( $query );
+		return $res;
+	}
+
+	// twitter_search_wordのlatest_tweet_idを更新
+	public static function updateLatestOtamesiTweetId( $database_manager, $latest_id, $word_id ){
+
+		$query = "UPDATE otamesi_twitter_search_word SET latest_tweet_id = ". $latest_id . " WHERE id = " . $word_id;
 		return $database_manager->insert( $query );
 	}
 

@@ -55,7 +55,7 @@ class SearchTwitter
 			$notice_user = $word_res["notice_user"];
 			$latest_tweet_id = $word_res["latest_tweet_id"];
 
-			$kown_tweet_id_buffer = array();
+			$known_tweet_id_buffer = array();
 
 			// 検索文字列を,で分割
 			$word_list = explode( ",", $word );
@@ -74,7 +74,7 @@ class SearchTwitter
 						$streaming_obj = new StreamingObject();
 						$streaming_obj->initWithJson( $statuses[$i] );
 
-						if ( !$streaming_obj->isRetweeted() && !in_array($streaming_obj->getId(), $kown_tweet_id_buffer) ) {
+						if ( !$streaming_obj->isRetweeted() && !in_array($streaming_obj->getId(), $known_tweet_id_buffer) ) {
 							// デバッグ
 							// $streaming_obj->displayTweet();
 							// print_r("\n" . $streaming_obj->getId() );
@@ -99,7 +99,7 @@ class SearchTwitter
 							}
 							else {
 								// DM送信済みとしてリストに保存しておく
-								$kown_tweet_id_buffer[] = $streaming_obj->getId();
+								$known_tweet_id_buffer[] = $streaming_obj->getId();
 							}
 						}
 
@@ -115,6 +115,94 @@ class SearchTwitter
 
 					// latest_id更新
 					DatabaseHelper::updateLatestTweetId( $database_manager, $latest_id, $word_id );
+				}
+			}
+		}
+	}
+}
+
+
+class OtamesiSearchTwitter
+{
+
+	public function search( $oauth_object ){
+
+		$twitter_manager = new TwitterPostManager();
+		$database_manager = new DatabaseManager();
+		$database_manager->connect();
+
+		$word_res = DatabaseHelper::selectFromOtamesiTwitterSearchWord( $database_manager, $twitter_manager );
+		foreach ($word_res as $o) {
+			$this->notice( $database_manager, $twitter_manager, $oauth_object, $o );
+		}
+		
+		$database_manager->close();
+	}
+
+
+	private function notice( $database_manager, $twitter_manager, $oauth_object, $word_res ) {
+
+		if ( $word_res !== null && count($word_res) > 0 ) {
+			$word_id = $word_res["id"];
+			$word = $word_res["word"];
+			$notice_user = $word_res["notice_user"];
+			$latest_tweet_id = $word_res["latest_tweet_id"];
+
+			$known_tweet_id_buffer = array();
+
+			// 検索文字列を,で分割
+			$word_list = explode( ",", $word );
+			foreach ( $word_list as $w ) {
+				// print_r("\n" . $w );
+				
+				// 検索
+				$search_result = $twitter_manager->search( $oauth_object, $w, 100, $latest_tweet_id );
+				$statuses = $search_result->statuses;
+				if ( $statuses > 0 ) {
+					$latest_id = null;
+					$current_date = date('Y年m月d日 H時i分');
+					$direct_message_text = "search word:\n" . $w . "\nat:\n" . $current_date . "\n";
+					// for ($i=0; $i < count($statuses); $i++) {
+					for ($i=count($statuses) - 1; $i >= 0; $i--) {
+						$streaming_obj = new StreamingObject();
+						$streaming_obj->initWithJson( $statuses[$i] );
+
+						if ( !$streaming_obj->isRetweeted() && !in_array($streaming_obj->getId(), $known_tweet_id_buffer) ) {
+							// デバッグ
+							// $streaming_obj->displayTweet();
+							print_r("\n" . $streaming_obj->getId() );
+							// print_r("\n" . $streaming_obj->getScreenName() );
+							// print_r("\n" . $streaming_obj->generateTweetLink() );
+
+							// DMで送る文字列生成
+							$t = $direct_message_text . $streaming_obj->generateTweetLink();
+							$res = $twitter_manager->sendDirectMessage( $oauth_object, $notice_user, $t );
+							// print_r($res);
+							if ( array_key_exists( "errors", $res ) ) {
+								// エラー
+								$error_msg = "notice user :\n@" . $notice_user . "\n";
+								$errors = $res->errors;
+								foreach ($errors as $error) {
+									$error_msg .= $error->code . " " . $error->message . ", ";
+								}
+								print_r($error_msg);
+								$twitter_manager->sendDirectMessage( $oauth_object, "tyorokunai_man", mb_substr($error_msg, 0 , 130) );
+								return;
+							}
+							else {
+								// DM送信済みとしてリストに保存しておく
+								$known_tweet_id_buffer[] = $streaming_obj->getId();
+							}
+						}
+
+						if ( $i === 0 ) {
+							$latest_id = $streaming_obj->getId();
+						}
+					}
+					// print_r($direct_message_text);
+
+					// latest_id更新
+					DatabaseHelper::updateLatestOtamesiTweetId( $database_manager, $latest_id, $word_id );
 				}
 			}
 		}
