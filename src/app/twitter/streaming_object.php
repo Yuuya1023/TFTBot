@@ -35,6 +35,19 @@ class StreamingObject
 		return preg_match("/" . $match_text . "/u", $this->getText());
 	}
 
+	public function isIncludeHashtag( $tag ){
+		if ( $tag === null || $tag === "" ) return false;
+
+		$tags = $this->getHashtags();
+		foreach ($tags as $t) {
+			if ( strcmp( $t->text, $tag ) === 0 ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+
 	public function getId(){
 		return $this->responseJson->id;
 	}
@@ -54,14 +67,19 @@ class StreamingObject
 	public function getMentionList(){
 		// メンションリスト作成
 		$mention_list = array();
-		$mentions = $this->responseJson->entities->user_mentions;
-		// for ($i=0; $i < count($mentions) ; $i++) { 
-		// 	$mention_list[count($mention_list)] = $mentions[$i]["screen_name"];
-		// }
+		$mentions = $this->getUserMentions();
 		foreach ($mentions as $mention) {
 			$mention_list[] = $mention->screen_name;
 		}
 		return $mention_list;
+	}
+
+	public function getHashtags(){
+		return $this->responseJson->entities->hashtags;
+	}
+
+	public function getUserMentions(){
+		return $this->responseJson->entities->user_mentions;
 	}
 
 
