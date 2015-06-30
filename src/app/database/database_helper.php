@@ -190,4 +190,17 @@ class DatabaseHelper{
 		return $database_manager->insert( $query );
 	}
 
+
+	// twitter_search_wordに登録
+	public static function insertTwitterSearchWord( $database_manager, $table_name, $word, $notice_user ){
+
+		$query = "INSERT INTO " . $table_name . " (word, notice_user) VALUES ('" . $word . "', '" . $notice_user . "')";
+		return $database_manager->insert( $query );
+	}
+	// twitter_search_wordに登録
+	public static function updateTwitterSearchWord( $database_manager, $table_name, $word, $notice_user ){
+
+		$query = "INSERT INTO " . $table_name . " (word, notice_user) VALUES ('" . $word . "', '" . $notice_user . "')";
+		return $database_manager->insert( $query );
+	}
 }

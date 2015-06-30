@@ -164,24 +164,8 @@ class TwitterPostManager
 					$streaming_obj = new StreamingObject();
 					$streaming_obj->init( fgets($fp) );
 
-					if ( $streaming_obj->isValidResponse() ) {
-						// デバッグ
-						$streaming_obj->displayDetail( $match_text_list );
-
-						// リツイートには反応しない,指定した文字列が入っているか
-						if ( !$streaming_obj->isRetweeted() && $streaming_obj->isIncludeText( $match_text_list ) ) {
-							// メンションのリスト作成
-							$mention_list = $streaming_obj->getMentionList();
-
-							// 自分を巻き込んでる場合は反応しない
-							if ( !in_array( $my_screen_name, $mention_list ) ) {
-								$this->replyImage( $oauth_object, $streaming_obj, $mention_list, $blog_name );
-							}
-						}
-					}
-					else {
-						// var_dump( $streaming_obj->getJson() );
-					}
+					$this->autoReply( $oauth_object, $streaming_obj, $my_screen_name, $blog_name, $match_text_list );
+					// $this->ticketBotMonitor( $streaming_obj );
 			    }
 			    fclose($fp);
 
@@ -208,6 +192,75 @@ class TwitterPostManager
 			sleep( 60 * 10 );
 	  		$this->streaming( $oauth_object, $my_screen_name, $match_text_list, $blog_name );
  		}
+	}
+
+
+	private function autoReply( $oauth_object, $streaming_obj, $my_screen_name, $blog_name, $match_text_list ) {
+
+		if ( $streaming_obj->isValidResponse() ) {
+			// デバッグ
+			$streaming_obj->displayDetail( $match_text_list );
+
+			// リツイートには反応しない,指定した文字列が入っているか
+			if ( !$streaming_obj->isRetweeted() && $streaming_obj->isIncludeText( $match_text_list ) ) {
+				// メンションのリスト作成
+				$mention_list = $streaming_obj->getMentionList();
+
+				// 自分を巻き込んでる場合は反応しない
+				if ( !in_array( $my_screen_name, $mention_list ) ) {
+					$this->replyImage( $oauth_object, $streaming_obj, $mention_list, $blog_name );
+				}
+			}
+		}
+		else {
+			// var_dump( $streaming_obj->getJson() );
+		}
+	}
+
+	private function ticketBotMonitor( $streaming_obj ) {
+
+		if ( $streaming_obj->isValidResponse() ) {
+			$streaming_obj->displayDetail( null );
+
+			if ( strcasecmp( $streaming_obj->getScreenName() , "for_yu_84" ) !== 0 || $streaming_obj->isRetweeted() ) return;
+
+			// デバッグ
+			print_r($streaming_obj->getHashtags());
+
+			if ( $streaming_obj->isIncludeHashtag( "チケボ監視君" ) ) {
+				$database_manager = new DatabaseManager();
+				$database_manager->connect();
+
+				$list = explode(",", $streaming_obj->getText());
+				print_r("------------------");
+				print_r($list);
+				print_r("------------------");
+
+				if ( $streaming_obj->isIncludeHashtag( "登録" ) ) {
+					// 登録 
+					$table_name = "otamesi_twitter_search_word";
+					$word = $list[0];
+					$notice_user = $list[1];
+					DatabaseHelper::insertTwitterSearchWord( $database_manager, $table_name, $word, $notice_user );
+				}
+				else if ( $streaming_obj->isIncludeHashtag( "更新" ) ) {
+					// 更新
+					
+				}
+				else if ( $streaming_obj->isIncludeHashtag( "取得" ) ) {
+					// 取得
+					
+				}
+				else if ( $streaming_obj->isIncludeHashtag( "削除" ) ) {
+					// 削除
+					
+				}
+				$database_manager->close();
+			}
+		}
+		else {
+			// var_dump( $streaming_obj->getJson() );
+		}
 	}
 
 	// public function streamingFilter( $oauth_object, $match_text_list ){
