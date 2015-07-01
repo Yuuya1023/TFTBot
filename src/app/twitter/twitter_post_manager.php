@@ -171,13 +171,13 @@ class TwitterPostManager
 
 			    // リトライ
 			    $this->retryCount++;
-			    if ( $this->retryCount < 20 ) {
+			    // if ( $this->retryCount < 20 ) {
 					$error_msg = "connection failed. retry count is " . $this->retryCount;
 					$this->recordError( $error_msg );
 
 					sleep( 60 );
 			  		$this->streaming( $oauth_object, $my_screen_name, $match_text_list, $blog_name );
-			    }
+			    // }
 			}
 			else {
 				// ソケット通信エラー

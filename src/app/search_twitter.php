@@ -53,6 +53,7 @@ class SearchTwitter
 			$word_id = $word_res["id"];
 			$word = $word_res["word"];
 			$notice_user = $word_res["notice_user"];
+			$notice_list = explode( ",", $notice_user);
 			$latest_tweet_id = $word_res["latest_tweet_id"];
 
 			$known_tweet_id_buffer = array();
@@ -83,24 +84,28 @@ class SearchTwitter
 
 							// DMで送る文字列生成
 							// $direct_message_text .= $streaming_obj->getText() . "\n" . $streaming_obj->generateTweetLink() . "\n\n";	// 文字数制限解除されたら
-							// DM送信
-							$t = $direct_message_text . $streaming_obj->generateTweetLink();
-							$res = $twitter_manager->sendDirectMessage( $oauth_object, $notice_user, $t );
-							// print_r($res);
-							if ( array_key_exists( "errors", $res ) ) {
-								// エラー
-								$error_msg = "notice user :\n@" . $notice_user . "\n";
-								$errors = $res->errors;
-								foreach ($errors as $error) {
-									$error_msg .= $error->code . " " . $error->message . ", ";
+							
+							foreach ($notice_list as $user) {
+								// DM送信
+								$t = $direct_message_text . $streaming_obj->generateTweetLink();
+								$res = $twitter_manager->sendDirectMessage( $oauth_object, $user, $t );
+								// print_r($res);
+								if ( array_key_exists( "errors", $res ) ) {
+									// エラー
+									$error_msg = "notice user :\n@" . $user . "\n";
+									$errors = $res->errors;
+									foreach ($errors as $error) {
+										$error_msg .= $error->code . " " . $error->message . ", ";
+									}
+									$twitter_manager->sendDirectMessage( $oauth_object, "tyorokunai_man", mb_substr($error_msg, 0 , 130) );
+									return;
 								}
-								$twitter_manager->sendDirectMessage( $oauth_object, "tyorokunai_man", mb_substr($error_msg, 0 , 130) );
-								return;
+								else {
+									// DM送信済みとしてリストに保存しておく
+									$known_tweet_id_buffer[] = $streaming_obj->getId();
+								}
 							}
-							else {
-								// DM送信済みとしてリストに保存しておく
-								$known_tweet_id_buffer[] = $streaming_obj->getId();
-							}
+							array_unique($known_tweet_id_buffer);
 						}
 
 						if ( $i === 0 ) {
@@ -146,6 +151,7 @@ class OtamesiSearchTwitter
 			$word_id = $word_res["id"];
 			$word = $word_res["word"];
 			$notice_user = $word_res["notice_user"];
+			$notice_list = explode( ",", $notice_user);
 			$latest_tweet_id = $word_res["latest_tweet_id"];
 
 			$known_tweet_id_buffer = array();
@@ -175,24 +181,27 @@ class OtamesiSearchTwitter
 							// print_r("\n" . $streaming_obj->generateTweetLink() );
 
 							// DMで送る文字列生成
-							$t = $direct_message_text . $streaming_obj->generateTweetLink();
-							$res = $twitter_manager->sendDirectMessage( $oauth_object, $notice_user, $t );
-							// print_r($res);
-							if ( array_key_exists( "errors", $res ) ) {
-								// エラー
-								$error_msg = "notice user :\n@" . $notice_user . "\n";
-								$errors = $res->errors;
-								foreach ($errors as $error) {
-									$error_msg .= $error->code . " " . $error->message . ", ";
+							foreach ($notice_list as $user) {
+								$t = $direct_message_text . $streaming_obj->generateTweetLink();
+								$res = $twitter_manager->sendDirectMessage( $oauth_object, $user, $t );
+								// print_r($res);
+								if ( array_key_exists( "errors", $res ) ) {
+									// エラー
+									$error_msg = "notice user :\n@" . $user . "\n";
+									$errors = $res->errors;
+									foreach ($errors as $error) {
+										$error_msg .= $error->code . " " . $error->message . ", ";
+									}
+									print_r($error_msg);
+									$twitter_manager->sendDirectMessage( $oauth_object, "tyorokunai_man", mb_substr($error_msg, 0 , 130) );
+									return;
 								}
-								print_r($error_msg);
-								$twitter_manager->sendDirectMessage( $oauth_object, "tyorokunai_man", mb_substr($error_msg, 0 , 130) );
-								return;
+								else {
+									// DM送信済みとしてリストに保存しておく
+									$known_tweet_id_buffer[] = $streaming_obj->getId();
+								}
 							}
-							else {
-								// DM送信済みとしてリストに保存しておく
-								$known_tweet_id_buffer[] = $streaming_obj->getId();
-							}
+							array_unique($known_tweet_id_buffer);
 						}
 
 						if ( $i === 0 ) {
