@@ -45,7 +45,10 @@ class PostToTwitter
 		$twitter_manager = new TwitterPostManager();
 
 		// 投稿するツイートをランダムで一件取得
-		$tum_res = DatabaseHelper::selectRandomTumblrPost( $database_manager, $blog_name, 1 );
+		$tum_res = DatabaseHelper::selectRandomNotTweetedTumblrPost( $database_manager, $blog_name );
+		if ( count($tum_res) === 0 ) {
+			$tum_res = DatabaseHelper::selectRandomTumblrPost( $database_manager, $blog_name, 1 );
+		}
 		if ( $tum_res && count( $tum_res ) > 0 ) {
 			// echo "<p>";
 			// var_dump($tum_res);

@@ -41,6 +41,13 @@ class DatabaseHelper{
 		return $photo_url_list;
 	}
 
+	// tumblr_postからランダムでまだTwitterに投稿されてない投稿を取得
+	public static function selectRandomNotTweetedTumblrPost( $database_manager, $blog_name ){
+		$query = "SELECT * FROM tumblr_post WHERE blog_name = '" . $blog_name . "' AND twitter_post_id IS NULL ORDER BY RAND() LIMIT 1";
+		return $database_manager->select( $query );
+	}
+
+
 	// tumblr_postからランダム投稿を取得
 	public static function selectRandomTumblrPost( $database_manager, $blog_name, $limit_row ){
 
@@ -48,7 +55,7 @@ class DatabaseHelper{
 		$id_list;
 		{
 			$query = "SELECT tumblr_post_id FROM twitter_post_log WHERE blog_name = '" . $blog_name . "' AND tumblr_post_id != -1 ORDER BY id DESC LIMIT 20";
-			echo "<p>{$query}";
+			// echo "<p>{$query}";
 			$id_list = $database_manager->select( $query );
 		}
 
