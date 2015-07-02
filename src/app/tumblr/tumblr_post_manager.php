@@ -1,6 +1,7 @@
 <?php
 
 include_once(dirname(__FILE__) . "/../../../define.php");
+include_once(dirname(__FILE__) . "/tumblr_object.php");
 
 class TumblrPostManager
 {
@@ -12,7 +13,7 @@ class TumblrPostManager
 
 	private $host_suffix = ".tumblr.com";
 
-	public function createWithBlogName( $blog_name, $last_post_id ) {
+	public function createWithBlogName( $blog_name, $last_post_id, $search_tags ) {
 
 		$this->offset = 0;
 		$host_name = $blog_name . $this->host_suffix;
@@ -25,17 +26,22 @@ class TumblrPostManager
 			// 投稿画像のurlだけをとりだし配列に保存
 			$posts = $obj->response->posts;
 			foreach ($posts as $post) {
-				$photos = $post->photos;
+				$post_object = new TumblrPostObject();
+				$post_object->initWithJson( $post );
 				
 				// 登録済みの投稿かチェック
-				if ( $post->id == $last_post_id ) {
+				if ( $post_object->getId() == $last_post_id ) {
 					return $this->post_list;
 				}
 				else {
-					foreach ($photos as $photo) {
-						$detail = $this->getDetail( $post, $photo );
-						$this->post_list[count($this->post_list)] = $detail;
-					}	
+					// 対象タグが入ってるやつだけ
+					if ( $search_tags === null || $post_object->isIncludeTags( $search_tags ) ) {
+				// var_dump($post_object->getTags());
+						$urls = $post_object->getOriginalSizeUrls();
+						foreach ($urls as $url) {
+							$this->post_list[] = $this->createDetail( $post_object, $url );
+						}
+					}
 				}
 			}
 
@@ -47,6 +53,8 @@ class TumblrPostManager
 				break;
 			}
 
+			print_r("\n..." . $this->offset);
+
 		}
 
 		// log
@@ -57,12 +65,12 @@ class TumblrPostManager
 
 	}
 
-	private function getDetail( $post, $photo ){
+	private function createDetail( $post_object, $url ){
 
 		$res = array();
-		$res['blog_name'] = $post->blog_name;
-		$res['post_id'] = $post->id;
-		$res['photo_url'] = $photo->original_size->url;
+		$res['blog_name'] = $post_object->getBlogName();
+		$res['post_id'] = $post_object->getId();
+		$res['photo_url'] = $url;
 
 		return $res;
 	}

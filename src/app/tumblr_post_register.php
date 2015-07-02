@@ -7,7 +7,7 @@ include_once(dirname(__FILE__) . "/database/database_helper.php");
 class TumblrPostRegister
 {
 
-	public function regist( $blog_name ){
+	public function regist( $blog_name, $search_tags ){
 
 		$tumblr_manager = new TumblrPostManager();
 
@@ -18,13 +18,7 @@ class TumblrPostRegister
 		$post_id = DatabaseHelper::selectPostIdFromTumblrPost( $database_manager, $blog_name );
 
 		// 投稿一覧取得
-		$post_list = $tumblr_manager->createWithBlogName( $blog_name, $post_id );
-		$count = count($post_list);
-		echo "<p>画像枚数 : {$count}<p>";
-
-		// echo "<p>";
-		// var_dump($post_list);
-		// echo "<p>";
+		$post_list = $tumblr_manager->createWithBlogName( $blog_name, $post_id, $search_tags );
 
 		// databaseに登録
 		$count = 0;
@@ -37,7 +31,6 @@ class TumblrPostRegister
 
 
 		echo "登録数:{$count}<p>";
-		echo "end<p>";
 	}
 
 }
