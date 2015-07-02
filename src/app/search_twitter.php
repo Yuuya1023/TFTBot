@@ -108,9 +108,12 @@ class SearchTwitter
 							array_unique($known_tweet_id_buffer);
 						}
 
-						if ( $i === 0 ) {
-							$latest_id = $streaming_obj->getId();
-						}
+						// if ( $i === 0 ) {
+						// 	$latest_id = $streaming_obj->getId();
+						// }
+						
+						// latest_id更新
+						DatabaseHelper::updateLatestTweetId( $database_manager, $streaming_obj->getId(), $word_id );
 					}
 					// print_r($direct_message_text);
 
@@ -118,8 +121,6 @@ class SearchTwitter
 					// $res = $twitter_manager->sendDirectMessage( $oauth_object, $notice_user, $direct_message_text ); // 文字数制限解除されたら
 					// print_r($res);
 
-					// latest_id更新
-					DatabaseHelper::updateLatestTweetId( $database_manager, $latest_id, $word_id );
 				}
 			}
 		}
@@ -204,14 +205,15 @@ class OtamesiSearchTwitter
 							array_unique($known_tweet_id_buffer);
 						}
 
-						if ( $i === 0 ) {
-							$latest_id = $streaming_obj->getId();
-						}
+						// if ( $i === 0 ) {
+						// 	$latest_id = $streaming_obj->getId();
+						// }
+
+						// latest_id更新
+						DatabaseHelper::updateLatestOtamesiTweetId( $database_manager, $streaming_obj->getId(), $word_id );
 					}
 					// print_r($direct_message_text);
 
-					// latest_id更新
-					DatabaseHelper::updateLatestOtamesiTweetId( $database_manager, $latest_id, $word_id );
 				}
 			}
 		}
