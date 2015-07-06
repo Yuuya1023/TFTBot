@@ -10,26 +10,34 @@ use Abraham\TwitterOAuth\TwitterOAuth;
 class TwitterPostManager
 {
 
+	private $oauth_object = null;
 	private $retryCount = 0;
 
+	public function init( $oauth_object ){
+		$this->oauth_object = $oauth_object;
+	}
 
-	private function connect( $oauth_object ){
+	private function connect(){
 
-		$connection = new TwitterOAuth($oauth_object->getConsumerKey(), $oauth_object->getConsumerSecret(), $oauth_object->getAccessToken(), $oauth_object->getAccessTokenSecret());
+		$connection = new TwitterOAuth( $this->oauth_object->getConsumerKey(), 
+										$this->oauth_object->getConsumerSecret(), 
+										$this->oauth_object->getAccessToken(), 
+										$this->oauth_object->getAccessTokenSecret()
+										);
 		return $connection;
 	}
 
 
-	public function uploadImage( $oauth_object, $photo_url_list ){
+	public function uploadImage( $photo_url_list ){
 
-		return $this->uploadReplyImage( $oauth_object, $photo_url_list, null, null, null );
+		return $this->uploadReplyImage( $photo_url_list, null, null, null );
 	}
 
 
-	public function uploadReplyImage( $oauth_object, $photo_url_list, $reply_to_status_id, $screen_name, $mentions ){
+	public function uploadReplyImage( $photo_url_list, $reply_to_status_id, $screen_name, $mentions ){
 
 		//接続
-		$connection = $this->connect( $oauth_object );
+		$connection = $this->connect();
 
 		$media_ids = array();
 		foreach ($photo_url_list as $photo_url) {
@@ -81,10 +89,10 @@ class TwitterPostManager
 	}
 
 
-	public function uploadText( $oauth_object, $text ){
+	public function uploadText( $text ){
 
 		//接続
-		$connection = $this->connect( $oauth_object );
+		$connection = $this->connect();
 
 		//ツイート
 		$result = $connection->post("statuses/update", array("status" => $text));
@@ -96,10 +104,10 @@ class TwitterPostManager
 	}
 
 
-	public function sendDirectMessage( $oauth_object, $screen_name, $text ){
+	public function sendDirectMessage( $screen_name, $text ){
 
 		//接続
-		$connection = $this->connect( $oauth_object );
+		$connection = $this->connect();
 
 		$param = array(
 		    "screen_name"	=>	$screen_name,
@@ -112,9 +120,9 @@ class TwitterPostManager
 	}
 
 
-	public function search( $oauth_object, $keyword, $count, $since_id ){
+	public function search( $keyword, $count, $since_id ){
 
-		$connection = $this->connect( $oauth_object );
+		$connection = $this->connect();
 		 
 		$param = array(
 		    "q"				=> $keyword,
@@ -141,12 +149,12 @@ class TwitterPostManager
 	}
 
 
-	public function streaming( $oauth_object, $my_screen_name, $match_text_list, $blog_name ){
+	public function streaming( $my_screen_name, $match_text_list, $blog_name ){
 		$url = 'https://userstream.twitter.com/1.1/user.json';
 		$method = 'GET';
  
 		// パラメータ
-		$oauth_parameters = $this->createOauthParams( $url, $method, $oauth_object, null );
+		$oauth_parameters = $this->createOauthParams( $url, $method, $this->oauth_object, null );
  
 		// 接続＆データ取得
 		$errno = null;
@@ -164,7 +172,7 @@ class TwitterPostManager
 					$streaming_obj = new StreamingObject();
 					$streaming_obj->init( fgets($fp) );
 
-					$this->autoReply( $oauth_object, $streaming_obj, $my_screen_name, $blog_name, $match_text_list );
+					$this->autoReply( $streaming_obj, $my_screen_name, $blog_name, $match_text_list );
 					// $this->ticketBotMonitor( $streaming_obj );
 			    }
 			    fclose($fp);
@@ -176,7 +184,7 @@ class TwitterPostManager
 					$this->recordError( $error_msg );
 
 					sleep( 60 );
-			  		$this->streaming( $oauth_object, $my_screen_name, $match_text_list, $blog_name );
+			  		$this->streaming( $my_screen_name, $match_text_list, $blog_name );
 			    // }
 			}
 			else {
@@ -190,12 +198,12 @@ class TwitterPostManager
 			$this->recordError( $e->getMessage() );
 
 			sleep( 60 * 10 );
-	  		$this->streaming( $oauth_object, $my_screen_name, $match_text_list, $blog_name );
+	  		$this->streaming( $my_screen_name, $match_text_list, $blog_name );
  		}
 	}
 
 
-	private function autoReply( $oauth_object, $streaming_obj, $my_screen_name, $blog_name, $match_text_list ) {
+	private function autoReply( $streaming_obj, $my_screen_name, $blog_name, $match_text_list ) {
 
 		if ( $streaming_obj->isValidResponse() ) {
 			// デバッグ
@@ -208,7 +216,7 @@ class TwitterPostManager
 
 				// 自分を巻き込んでる場合は反応しない
 				if ( !in_array( $my_screen_name, $mention_list ) ) {
-					$this->replyImage( $oauth_object, $streaming_obj, $mention_list, $blog_name );
+					$this->replyImage( $streaming_obj, $mention_list, $blog_name );
 				}
 			}
 		}
@@ -381,7 +389,7 @@ class TwitterPostManager
 	}
 
 
-	private function replyImage( $oauth_object, $streaming_obj, $mention_list, $blog_name ) {
+	private function replyImage( $streaming_obj, $mention_list, $blog_name ) {
 		$database_manager = new DatabaseManager();
 		$database_manager->connect();
 
@@ -392,8 +400,7 @@ class TwitterPostManager
 		if ( $count < $post_limit ) {
 			$photo_url_list = DatabaseHelper::selectRandomPhotoUrlFromTumblrPost( $database_manager, $blog_name, 1 );
 			// $photo_url_list = array($photo_url);
-			$upload_result = $this->uploadReplyImage( $oauth_object, 
-													$photo_url_list, 
+			$upload_result = $this->uploadReplyImage( $photo_url_list, 
 													$streaming_obj->getId(), 
 													$streaming_obj->getScreenName(), 
 													$mention_list );

@@ -6,6 +6,8 @@ class StreamingObject
 
 	public function init( $response ){
 		$this->responseJson = json_decode($response);
+		if ( gettype($this->responseJson) === "integer" || gettype($this->responseJson) === "double" ) 
+			$this->responseJson = null;
 	}
 
 	public function initWithJson( $json ){
@@ -17,7 +19,7 @@ class StreamingObject
 	}
 
 	public function isValidResponse(){
-		return $this->responseJson && array_key_exists( "id", $this->responseJson );
+		return $this->responseJson !== null && array_key_exists( "id", $this->responseJson );
 	}
 
 	public function isRetweeted(){

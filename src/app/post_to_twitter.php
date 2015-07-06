@@ -43,6 +43,7 @@ class PostToTwitter
 		$database_manager->connect();
 
 		$twitter_manager = new TwitterPostManager();
+		$twitter_manager->init( $oauth_object );
 
 		// 投稿するツイートをランダムで一件取得
 		$tum_res = DatabaseHelper::selectRandomNotTweetedTumblrPost( $database_manager, $blog_name );
@@ -65,7 +66,7 @@ class PostToTwitter
 				$post_text = DatabaseHelper::selectPostTextFromTwitterPost( $database_manager, $temp_twitter_post_id );
 
 				// 投稿
-				$upload_result = $twitter_manager->uploadText( $oauth_object, $post_text );
+				$upload_result = $twitter_manager->uploadText( $post_text );
 
 				if ( array_key_exists( "errors", $upload_result ) ) {
 					$errors = $upload_result->errors;
@@ -80,7 +81,7 @@ class PostToTwitter
 				// 画像をアップロードしてそのまま投稿
 				$photo_url_list = array();
 				$photo_url_list[0] = $tum_res[0]['photo_url'];
-				$upload_result = $twitter_manager->uploadImage( $oauth_object, $photo_url_list );
+				$upload_result = $twitter_manager->uploadImage( $photo_url_list );
 
 				if ( array_key_exists( "errors", $upload_result ) ) {
 					$errors = $upload_result->errors;
@@ -133,6 +134,7 @@ class PostToTwitter
 		$database_manager->connect();
 
 		$twitter_manager = new TwitterPostManager();
+		$twitter_manager->init( $oauth_object );
 
 		// 投稿するツイートをランダムで4件取得
 		$tum_res = DatabaseHelper::selectRandomTumblrPost( $database_manager, $blog_name, 4 );
@@ -146,7 +148,7 @@ class PostToTwitter
 				$tumblr_post_id_list[$index] = $res['id'];
 				$photo_url_list[$index] = $res['photo_url'];
 			}
-			$upload_result = $twitter_manager->uploadImage( $oauth_object, $photo_url_list );
+			$upload_result = $twitter_manager->uploadImage( $photo_url_list );
 
 			if ( array_key_exists( "errors", $upload_result ) ) {
 				$errors = $upload_result->errors;

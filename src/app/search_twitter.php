@@ -22,12 +22,13 @@ class SearchTwitter
 	public function search( $oauth_object ){
 
 		$twitter_manager = new TwitterPostManager();
+		$twitter_manager->init( $oauth_object );
 		$database_manager = new DatabaseManager();
 		$database_manager->connect();
 
-		$word_res = DatabaseHelper::selectFromTwitterSearchWord( $database_manager, $twitter_manager );
+		$word_res = DatabaseHelper::selectFromTwitterSearchWord( $database_manager );
 		foreach ($word_res as $o) {
-			$this->notice( $database_manager, $twitter_manager, $oauth_object, $o );
+			$this->notice( $database_manager, $twitter_manager, $o );
 		}
 		
 		$database_manager->close();
@@ -37,17 +38,18 @@ class SearchTwitter
 	public function searchWithId( $oauth_object, $word_id ){
 
 		$twitter_manager = new TwitterPostManager();
+		$twitter_manager->init( $oauth_object );
 		$database_manager = new DatabaseManager();
 		$database_manager->connect();
 
-		$word_res = DatabaseHelper::selectFromTwitterSearchWordWithId( $database_manager, $twitter_manager, $word_id );
-		$this->notice( $database_manager, $twitter_manager, $oauth_object, $word_res );
+		$word_res = DatabaseHelper::selectFromTwitterSearchWordWithId( $database_manager, $word_id );
+		$this->notice( $database_manager, $twitter_manager, $word_res );
 		
 		$database_manager->close();
 	}
 
 
-	private function notice( $database_manager, $twitter_manager, $oauth_object, $word_res ) {
+	private function notice( $database_manager, $twitter_manager, $word_res ) {
 
 		if ( $word_res !== null && count($word_res) > 0 ) {
 			$word_id = $word_res["id"];
@@ -64,7 +66,7 @@ class SearchTwitter
 				// print_r("\n" . $w );
 				
 				// 検索
-				$search_result = $twitter_manager->search( $oauth_object, $w, 100, $latest_tweet_id );
+				$search_result = $twitter_manager->search( $w, 100, $latest_tweet_id );
 				$statuses = $search_result->statuses;
 				if ( $statuses > 0 ) {
 					$latest_id = null;
@@ -78,7 +80,7 @@ class SearchTwitter
 						if ( !$streaming_obj->isRetweeted() && !in_array($streaming_obj->getId(), $known_tweet_id_buffer) ) {
 							// デバッグ
 							// $streaming_obj->displayTweet();
-							// print_r("\n" . $streaming_obj->getId() );
+							print_r("\n" . $streaming_obj->getId() );
 							// print_r("\n" . $streaming_obj->getScreenName() );
 							// print_r("\n" . $streaming_obj->generateTweetLink() );
 
@@ -88,7 +90,7 @@ class SearchTwitter
 							foreach ($notice_list as $user) {
 								// DM送信
 								$t = $direct_message_text . $streaming_obj->generateTweetLink();
-								$res = $twitter_manager->sendDirectMessage( $oauth_object, $user, $t );
+								$res = $twitter_manager->sendDirectMessage( $user, $t );
 								// print_r($res);
 								if ( array_key_exists( "errors", $res ) ) {
 									// エラー
@@ -97,7 +99,7 @@ class SearchTwitter
 									foreach ($errors as $error) {
 										$error_msg .= $error->code . " " . $error->message . ", ";
 									}
-									$twitter_manager->sendDirectMessage( $oauth_object, "tyorokunai_man", mb_substr($error_msg, 0 , 130) );
+									$twitter_manager->sendDirectMessage( "tyorokunai_man", mb_substr($error_msg, 0 , 130) );
 									return;
 								}
 								else {
@@ -134,19 +136,20 @@ class OtamesiSearchTwitter
 	public function search( $oauth_object ){
 
 		$twitter_manager = new TwitterPostManager();
+		$twitter_manager->init( $oauth_object );
 		$database_manager = new DatabaseManager();
 		$database_manager->connect();
 
-		$word_res = DatabaseHelper::selectFromOtamesiTwitterSearchWord( $database_manager, $twitter_manager );
+		$word_res = DatabaseHelper::selectFromOtamesiTwitterSearchWord( $database_manager );
 		foreach ($word_res as $o) {
-			$this->notice( $database_manager, $twitter_manager, $oauth_object, $o );
+			$this->notice( $database_manager, $twitter_manager, $o );
 		}
 		
 		$database_manager->close();
 	}
 
 
-	private function notice( $database_manager, $twitter_manager, $oauth_object, $word_res ) {
+	private function notice( $database_manager, $twitter_manager, $word_res ) {
 
 		if ( $word_res !== null && count($word_res) > 0 ) {
 			$word_id = $word_res["id"];
@@ -163,7 +166,7 @@ class OtamesiSearchTwitter
 				// print_r("\n" . $w );
 				
 				// 検索
-				$search_result = $twitter_manager->search( $oauth_object, $w, 100, $latest_tweet_id );
+				$search_result = $twitter_manager->search( $w, 100, $latest_tweet_id );
 				$statuses = $search_result->statuses;
 				if ( $statuses > 0 ) {
 					$latest_id = null;
@@ -184,7 +187,7 @@ class OtamesiSearchTwitter
 							// DMで送る文字列生成
 							foreach ($notice_list as $user) {
 								$t = $direct_message_text . $streaming_obj->generateTweetLink();
-								$res = $twitter_manager->sendDirectMessage( $oauth_object, $user, $t );
+								$res = $twitter_manager->sendDirectMessage( $user, $t );
 								// print_r($res);
 								if ( array_key_exists( "errors", $res ) ) {
 									// エラー
@@ -194,7 +197,7 @@ class OtamesiSearchTwitter
 										$error_msg .= $error->code . " " . $error->message . ", ";
 									}
 									print_r($error_msg);
-									$twitter_manager->sendDirectMessage( $oauth_object, "tyorokunai_man", mb_substr($error_msg, 0 , 130) );
+									$twitter_manager->sendDirectMessage( "tyorokunai_man", mb_substr($error_msg, 0 , 130) );
 									return;
 								}
 								else {
